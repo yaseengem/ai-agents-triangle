@@ -1,0 +1,201 @@
+"""
+Tests for voice.py router
+
+Tests cover:
+- _get_param_from_request (generic param extraction)
+- _get_enabled_tools_from_request (JSON array parsing)
+- /voice/sessions endpoint (list active sessions)
+- /voice/sessions/{session_id} endpoint (stop session)
+"""
+import pytest
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
+from unittest.mock import MagicMock
+
+
+class TestGetParamFromRequest:
+    """Tests for _get_param_from_request function."""
+
+    def test_extracts_from_custom_header(self):
+        """Cloud mode: extract from custom header."""
+        from routers.voice import _get_param_from_request
+
+        mock_ws = MagicMock()
+        mock_ws.headers.get.return_value = "test-session-123"
+
+        result = _get_param_from_request(mock_ws, "session-id", None)
+
+        assert result == "test-session-123"
+        mock_ws.headers.get.assert_called_with("x-amzn-bedrock-agentcore-runtime-custom-session-id")
+
+    def test_falls_back_to_query_param(self):
+        """Local mode: fall back to query param when header absent."""
+        from routers.voice import _get_param_from_request
+
+        mock_ws = MagicMock()
+        mock_ws.headers.get.return_value = None
+
+        result = _get_param_from_request(mock_ws, "user-id", "user-456")
+
+        assert result == "user-456"
+
+    def test_header_takes_precedence(self):
+        """Header takes precedence over query param."""
+        from routers.voice import _get_param_from_request
+
+        mock_ws = MagicMock()
+        mock_ws.headers.get.return_value = "from-header"
+
+        result = _get_param_from_request(mock_ws, "session-id", "from-query")
+
+        assert result == "from-header"
+
+    def test_returns_none_when_both_absent(self):
+        """Returns None when neither header nor query param present."""
+        from routers.voice import _get_param_from_request
+
+        mock_ws = MagicMock()
+        mock_ws.headers.get.return_value = None
+
+        result = _get_param_from_request(mock_ws, "session-id", None)
+
+        assert result is None
+
+
+class TestGetEnabledToolsFromRequest:
+    """Tests for _get_enabled_tools_from_request function."""
+
+    def test_parses_json_array(self):
+        """Parses JSON array from header."""
+        from routers.voice import _get_enabled_tools_from_request
+
+        mock_ws = MagicMock()
+        mock_ws.headers.get.return_value = '["tool1", "tool2"]'
+
+        result = _get_enabled_tools_from_request(mock_ws, None)
+
+        assert result == ["tool1", "tool2"]
+
+    def test_falls_back_to_query_param(self):
+        """Falls back to query param for local mode."""
+        from routers.voice import _get_enabled_tools_from_request
+
+        mock_ws = MagicMock()
+        mock_ws.headers.get.return_value = None
+
+        result = _get_enabled_tools_from_request(mock_ws, '["calculator"]')
+
+        assert result == ["calculator"]
+
+    def test_returns_empty_list_when_none(self):
+        """Returns empty list when no tools specified."""
+        from routers.voice import _get_enabled_tools_from_request
+
+        mock_ws = MagicMock()
+        mock_ws.headers.get.return_value = None
+
+        result = _get_enabled_tools_from_request(mock_ws, None)
+
+        assert result == []
+
+    def test_handles_invalid_json(self):
+        """Returns empty list on invalid JSON."""
+        from routers.voice import _get_enabled_tools_from_request
+
+        mock_ws = MagicMock()
+        mock_ws.headers.get.return_value = "not valid json"
+
+        result = _get_enabled_tools_from_request(mock_ws, None)
+
+        assert result == []
+
+
+class TestVoiceSessionsEndpoint:
+    """Tests for the /voice/sessions endpoint."""
+
+    @pytest.fixture
+    def client(self):
+        """Create test client with voice router."""
+        from routers.voice import router, _active_sessions
+
+        # Clear any existing sessions
+        _active_sessions.clear()
+
+        app = FastAPI()
+        app.include_router(router)
+        return TestClient(app)
+
+    def test_list_sessions_empty(self, client):
+        """Test listing sessions when none are active."""
+        response = client.get("/voice/sessions")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["active_sessions"] == []
+        assert data["count"] == 0
+
+    def test_list_sessions_with_active(self, client):
+        """Test listing sessions with active sessions."""
+        from routers.voice import _active_sessions
+
+        # Simulate active sessions
+        _active_sessions["session-1"] = "mock_agent_1"
+        _active_sessions["session-2"] = "mock_agent_2"
+
+        response = client.get("/voice/sessions")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert set(data["active_sessions"]) == {"session-1", "session-2"}
+        assert data["count"] == 2
+
+        # Cleanup
+        _active_sessions.clear()
+
+
+class TestStopSessionEndpoint:
+    """Tests for the /voice/sessions/{session_id} DELETE endpoint."""
+
+    @pytest.fixture
+    def client(self):
+        """Create test client with voice router."""
+        from routers.voice import router, _active_sessions
+
+        _active_sessions.clear()
+
+        app = FastAPI()
+        app.include_router(router)
+        return TestClient(app)
+
+    def test_stop_nonexistent_session(self, client):
+        """Test stopping a session that doesn't exist."""
+        response = client.delete("/voice/sessions/nonexistent-id")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "not_found"
+        assert data["session_id"] == "nonexistent-id"
+
+    def test_stop_existing_session(self, client):
+        """Test stopping an existing session."""
+        from routers.voice import _active_sessions
+        from unittest.mock import MagicMock, AsyncMock
+
+        # Create mock agent with async stop method
+        mock_agent = MagicMock()
+        mock_agent.stop = AsyncMock()
+
+        _active_sessions["test-session"] = mock_agent
+
+        response = client.delete("/voice/sessions/test-session")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "stopped"
+        assert data["session_id"] == "test-session"
+
+        # Verify session was removed
+        assert "test-session" not in _active_sessions
+
+        # Verify stop was called
+        mock_agent.stop.assert_called_once()

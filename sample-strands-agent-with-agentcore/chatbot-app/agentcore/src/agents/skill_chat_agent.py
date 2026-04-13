@@ -1,0 +1,248 @@
+"""
+SkillChatAgent - ChatAgent variant with progressive skill disclosure.
+
+Inherits all of ChatAgent's functionality (streaming, session management, etc.)
+but routes @skill-decorated tools through skill_dispatcher + skill_executor.
+"""
+
+import logging
+import os
+from typing import Optional, List, Dict
+
+from agents.chat_agent import ChatAgent
+from skill.skill_tools import set_dispatcher_registry
+from skill.skill_registry import SkillRegistry
+from skill.decorators import _apply_skill_metadata
+
+# Resolve skills directory relative to this file: src/agents/../../skills → agentcore/skills
+_SKILLS_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "skills")
+
+# Import local tools (same as ChatAgent uses)
+import local_tools
+
+logger = logging.getLogger(__name__)
+
+
+# MCP Runtime skills require 3LO OAuth; everything else is Gateway.
+_MCP_RUNTIME_SKILLS = {"gmail", "google-calendar", "notion", "github"}
+
+MCP_TOOL_SKILL_MAP: Dict[str, str] = {
+    # Gateway: weather
+    "get_today_weather": "weather",
+    "get_weather_forecast": "weather",
+    # Gateway: financial-news
+    "stock_quote": "financial-news",
+    "stock_history": "financial-news",
+    "financial_news": "financial-news",
+    "stock_analysis": "financial-news",
+    # Gateway: arxiv-search
+    "arxiv_search": "arxiv-search",
+    "arxiv_get_paper": "arxiv-search",
+    # Gateway: google-web-search
+    "google_web_search": "google-web-search",
+    # Gateway: google-maps
+    "search_places": "google-maps",
+    "search_nearby_places": "google-maps",
+    "get_place_details": "google-maps",
+    "get_directions": "google-maps",
+    "geocode_address": "google-maps",
+    "reverse_geocode": "google-maps",
+    "show_on_map": "google-maps",
+    # Gateway: wikipedia-search
+    "wikipedia_search": "wikipedia-search",
+    "wikipedia_get_article": "wikipedia-search",
+    # Gateway: tavily-search
+    "tavily_search": "tavily-search",
+    "tavily_extract": "tavily-search",
+    # MCP Runtime: gmail
+    "list_labels": "gmail",
+    "list_emails": "gmail",
+    "search_emails": "gmail",
+    "read_email": "gmail",
+    "send_email": "gmail",
+    "draft_email": "gmail",
+    "delete_email": "gmail",
+    "bulk_delete_emails": "gmail",
+    "modify_email": "gmail",
+    "get_email_thread": "gmail",
+    # MCP Runtime: google-calendar
+    "list_calendars": "google-calendar",
+    "list_events": "google-calendar",
+    "get_event": "google-calendar",
+    "create_event": "google-calendar",
+    "update_event": "google-calendar",
+    "delete_event": "google-calendar",
+    "quick_add_event": "google-calendar",
+    "check_availability": "google-calendar",
+    # MCP Runtime: notion
+    "notion_search": "notion",
+    "notion_fetch": "notion",
+    "notion_create_page": "notion",
+    "notion_update_page": "notion",
+    "notion_update_block": "notion",
+    "notion_append_blocks": "notion",
+    # MCP Runtime: github
+    "github_search_repos": "github",
+    "github_get_repo": "github",
+    "github_list_issues": "github",
+    "github_get_issue": "github",
+    "github_list_pulls": "github",
+    "github_get_pull": "github",
+    "github_get_file": "github",
+    "github_search_code": "github",
+    "github_create_branch": "github",
+    "github_push_files": "github",
+    "github_create_pull_request": "github",
+}
+
+# A2A agents exposed as skills (auto-injected into enabled_tools).
+A2A_SKILL_TOOLS: Dict[str, str] = {
+    "agentcore_code-agent": "code-agent",
+}
+
+
+class SkillChatAgent(ChatAgent):
+    """ChatAgent with progressive skill disclosure.
+
+    Only tools decorated with @skill are routed through skill_dispatcher/executor.
+    The rest of the ChatAgent behavior (streaming, session, hooks) is inherited.
+    """
+
+    def _build_system_prompt(self):
+        """Build system prompt for skill-based agent.
+
+        Skill tools get their guidance from SKILL.md (loaded on-demand).
+        System prompt only includes base prompt + date.
+        """
+        from agent.config.prompt_builder import BASE_TEXT_PROMPT, get_current_date_pacific
+
+        return [
+            {"text": BASE_TEXT_PROMPT},
+            {"text": f"Current date: {get_current_date_pacific()}"}
+        ]
+
+    def _load_tools(self):
+        """Override: inject all MCP/A2A skill tool IDs and extract individual MCP tools."""
+        if self.enabled_tools is None:
+            self.enabled_tools = []
+        has_auth = bool(getattr(self, 'auth_token', None))
+        for tool_name, skill_name in MCP_TOOL_SKILL_MAP.items():
+            if skill_name in _MCP_RUNTIME_SKILLS:
+                if not has_auth:
+                    continue
+                prefixed = f"mcp_{tool_name}"
+            else:
+                prefixed = f"gateway_{tool_name}"
+            if prefixed not in self.enabled_tools:
+                self.enabled_tools.append(prefixed)
+
+        for agent_id in A2A_SKILL_TOOLS:
+            if agent_id not in self.enabled_tools:
+                self.enabled_tools.append(agent_id)
+                logger.debug(f"[SkillChatAgent] Auto-injected A2A skill tool: {agent_id}")
+
+        tools = super()._load_tools()
+
+        loaded_ids = {getattr(t, 'tool_name', None) for t in tools}
+        from agents.chat_agent import TOOL_REGISTRY
+        for tool_id, tool_obj in TOOL_REGISTRY.items():
+            if getattr(tool_obj, '_skill_name', None) and tool_id not in loaded_ids:
+                tools.append(tool_obj)
+                logger.debug(f"[SkillChatAgent] Auto-loaded skill tool: {tool_id}")
+
+        final_tools = []
+        for t in tools:
+            if self._is_mcp_client(t):
+                mcp_skill_tools = self._extract_mcp_skill_tools(t)
+                final_tools.extend(mcp_skill_tools)
+                logger.info(
+                    f"[SkillChatAgent] Extracted {len(mcp_skill_tools)} MCP skill tools "
+                    f"from {t.__class__.__name__}"
+                )
+            else:
+                final_tools.append(t)
+
+        return final_tools
+
+    @staticmethod
+    def _is_mcp_client(obj) -> bool:
+        """Check if an object is an MCPClient / ToolProvider (not an individual tool)."""
+        # MCPClient has list_tools_sync but no tool_spec (unlike MCPAgentTool)
+        return hasattr(obj, "list_tools_sync") and not hasattr(obj, "tool_spec")
+
+    def _extract_mcp_skill_tools(self, client) -> list:
+        """Start MCP client and extract individual tools with skill metadata."""
+        try:
+            # Start client session and list available tools
+            client.start()
+            paginated_tools = client.list_tools_sync()
+
+            skill_tools = []
+            for tool in paginated_tools:
+                tool_name = tool.tool_name
+                skill_name = MCP_TOOL_SKILL_MAP.get(tool_name)
+
+                if skill_name:
+                    _apply_skill_metadata(tool, skill_name)
+                    logger.debug(
+                        f"[SkillChatAgent] MCP tool '{tool_name}' → skill '{skill_name}'"
+                    )
+                else:
+                    logger.warning(
+                        f"[SkillChatAgent] MCP tool '{tool_name}' has no skill mapping — "
+                        f"passing as non-skill tool"
+                    )
+
+                skill_tools.append(tool)
+
+            return skill_tools
+
+        except Exception as e:
+            logger.error(f"[SkillChatAgent] Failed to extract MCP tools: {e}")
+            return []
+
+    def create_agent(self):
+        """Override: set up skill registry, then delegate to ChatAgent.create_agent()."""
+        from skill.skill_tools import skill_dispatcher, skill_executor
+        from agent.config.prompt_builder import system_prompt_to_string
+
+        skill_tools = [t for t in self.tools if getattr(t, '_skill_name', None)]
+        non_skill_tools = [t for t in self.tools if not getattr(t, '_skill_name', None)]
+
+        if skill_tools:
+            logger.info(
+                f"[SkillChatAgent] Routing {len(skill_tools)} skill tools: "
+                f"{[t.tool_name for t in skill_tools]}"
+            )
+        if non_skill_tools:
+            logger.info(
+                f"[SkillChatAgent] {len(non_skill_tools)} non-skill tools passed directly: "
+                f"{[getattr(t, 'tool_name', getattr(t, '__name__', str(t))) for t in non_skill_tools]}"
+            )
+
+        registry = SkillRegistry(_SKILLS_DIR)
+        registry.discover_skills()
+        registry.bind_tools(skill_tools)
+        set_dispatcher_registry(registry)
+        self._skill_registry = registry
+
+        catalog = registry.get_catalog()
+        if self.system_prompt:
+            base_prompt_text = system_prompt_to_string(self.system_prompt)
+            self.system_prompt = [{"text": f"{base_prompt_text}\n\n{catalog}"}]
+        else:
+            self.system_prompt = [{"text": catalog}]
+
+        self.tools = [skill_dispatcher, skill_executor] + non_skill_tools
+
+        _SEQUENTIAL_SKILLS = {'web-search'}
+        if _SEQUENTIAL_SKILLS & set(registry.skill_names):
+            self._force_sequential = True
+            logger.info(f"[SkillChatAgent] SequentialToolExecutor forced — skills require it: {_SEQUENTIAL_SKILLS & set(registry.skill_names)}")
+
+        super().create_agent()
+
+        logger.info(
+            f"[SkillChatAgent] Agent created with skills: {registry.skill_names}, "
+            f"tools: {list(self.agent.tool_registry.registry.keys())}"
+        )

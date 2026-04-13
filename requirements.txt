@@ -1,0 +1,10 @@
+fastapi==0.116.1
+uvicorn[standard]==0.35.0
+python-multipart==0.0.9
+pydantic>=2.0
+boto3>=1.40.1
+strands-agents
+pypdf>=4.0.0
+Pillow>=10.0.0
+filelock>=3.12.0
+python-dotenv>=1.0.0
