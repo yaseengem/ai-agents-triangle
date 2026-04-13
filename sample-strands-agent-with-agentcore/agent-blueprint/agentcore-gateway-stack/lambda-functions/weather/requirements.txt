@@ -1,2 +1,0 @@
-# No external dependencies required
-# Uses built-in urllib for HTTP requests

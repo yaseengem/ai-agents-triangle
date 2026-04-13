@@ -35,10 +35,16 @@ _TIMEOUT = int(os.getenv("APPROVAL_TIMEOUT_SECONDS", str(24 * 3600)))
 
 
 def _now_iso() -> str:
+    """Return the current UTC time as an ISO-8601 string."""
     return datetime.now(timezone.utc).isoformat()
 
 
 def _write_json(path: Path, data: dict) -> None:
+    """Atomically write *data* as JSON to *path*.
+
+    Creates any missing parent directories, writes to a sibling `.tmp` file
+    first, then renames it into place so readers never see a partial file.
+    """
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = str(path) + ".tmp"
     with open(tmp, "w", encoding="utf-8") as f:
@@ -47,6 +53,11 @@ def _write_json(path: Path, data: dict) -> None:
 
 
 def _update_status(status_path: Path, status: str) -> None:
+    """Merge a new *status* value into the JSON file at *status_path*.
+
+    If the file does not exist or is corrupt it is recreated from scratch.
+    The ``updated_at`` field is always refreshed to the current UTC time.
+    """
     try:
         with open(status_path, encoding="utf-8") as f:
             data = json.load(f)
@@ -58,11 +69,28 @@ def _update_status(status_path: Path, status: str) -> None:
 
 
 class ApprovalHook:
+    """Coordinates human-in-the-loop approval pauses for the Claims workflow.
+
+    One instance is typically shared across the FastAPI app and the Strands
+    agent runner.  It owns the filesystem side-effects (writing interrupt and
+    status files) and delegates in-process signalling to the module-level
+    ``_approval_events`` / ``_decisions`` registries.
+    """
+
     def __init__(self, storage_path: str, domain: str = "claims") -> None:
+        """Initialise the hook.
+
+        Args:
+            storage_path: Root directory under which per-domain case folders
+                are stored (e.g. ``"/data/cases"``).
+            domain: Sub-directory name grouping cases by business domain
+                (defaults to ``"claims"``).
+        """
         self.storage_path = storage_path
         self.domain = domain
 
     def _case_dir(self, case_id: str) -> Path:
+        """Return the filesystem path for a specific case's data directory."""
         return Path(self.storage_path) / self.domain / case_id
 
     # ── called from within the Strands workflow coroutine ───────────────────
