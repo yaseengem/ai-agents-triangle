@@ -1,0 +1,6 @@
+claim_id,policy_no,user_id,claim_date,claim_type,claimed_amount,status,fraud_flagged
+CLM-H-001,POL-1004,USR-004,2026-01-15,health,38000,closed,false
+CLM-H-002,POL-1004,USR-004,2026-03-20,health,41000,closed,false
+CLM-A-001,POL-1002,USR-002,2025-11-10,auto,4500,closed,false
+CLM-H-003,POL-1005,USR-005,2026-02-01,health,32000,closed,false
+CLM-H-004,POL-1005,USR-005,2026-03-28,health,33500,closed,false

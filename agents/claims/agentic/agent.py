@@ -1,213 +1,102 @@
 """
-Claims Processing Strands agent — core agentic logic.
+Calvin — master claims processing agent for ABC Insurance.
 
 Provides:
-  create_agent(role)              → a configured Strands Agent instance
-  run_processing_workflow(...)    → async workflow triggered by POST /process
-  run_chat(...)                   → async SSE generator for POST /chat
+  create_agent(role, user_id, session_id)  → configured Strands Agent
+  run_chat(session_id, case_id, role, user_id, message)  → async SSE generator
 """
 
 from __future__ import annotations
 
-import asyncio
 import json
 import os
 import sys
 from collections.abc import AsyncGenerator
-from datetime import datetime, timezone
-from pathlib import Path
 
 _REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
 
 from strands import Agent  # noqa: E402
-from strands.models import BedrockModel  # noqa: E402
-from botocore.config import Config  # noqa: E402
 
 from utils.logger import get_logger  # noqa: E402
-from .prompts import SYSTEM_PROMPT, ROLE_INSTRUCTIONS, RULES_TEMPLATE  # noqa: E402
-from .memory_manager import memory_manager  # noqa: E402
-from .approval_hook import ApprovalHook  # noqa: E402
-from .tools import (  # noqa: E402
-    document_parser,
-    read_case_status,
-    read_case_analysis,
-    read_decision_log,
-    search_cases,
-    write_analysis_result,
-    write_decision_log,
+from .model import get_model  # noqa: E402
+from .prompts import CALVIN_SYSTEM_PROMPT  # noqa: E402
+
+# Sub-agents (Agents-as-Tools)
+from .sub_agents.intake import intake_agent  # noqa: E402
+from .sub_agents.extraction import extraction_agent  # noqa: E402
+from .sub_agents.validation import validation_agent  # noqa: E402
+from .sub_agents.medical_review import medical_review_agent  # noqa: E402
+from .sub_agents.fraud import fraud_agent  # noqa: E402
+from .sub_agents.adjudication import adjudication_agent  # noqa: E402
+from .sub_agents.decision_qa import decision_qa_agent  # noqa: E402
+from .sub_agents.communication import communication_agent  # noqa: E402
+
+# Direct tools on master
+from .tools.csv_store import (  # noqa: E402
+    query_policies, query_claims_history, query_fraud_patterns,
+    query_claims_metadata, approve_case,
 )
+from .tools.audit_log import read_audit_log, log_decision  # noqa: E402
+from .tools.memory import memory_save, memory_load  # noqa: E402
 
 logger = get_logger(__name__)
 
-# ── configuration ─────────────────────────────────────────────────────────────
-MODEL_ID = os.getenv("BEDROCK_MODEL_ID", "anthropic.claude-3-haiku-20240307-v1:0")
-AWS_REGION = os.getenv("AWS_REGION", "us-east-1")
-STORAGE_PATH = os.getenv("STORAGE_PATH", "./storage")
-
-# Module-level singleton — one approval hook per process
-approval_hook = ApprovalHook(STORAGE_PATH, domain="claims")
-
 _ALL_TOOLS = [
-    document_parser,
-    read_case_status,
-    read_case_analysis,
-    read_decision_log,
-    search_cases,
-    write_analysis_result,
-    write_decision_log,
+    # Pipeline sub-agents
+    intake_agent, extraction_agent, validation_agent, medical_review_agent,
+    fraud_agent, adjudication_agent, decision_qa_agent, communication_agent,
+    # Direct query tools
+    query_policies, query_claims_history, query_fraud_patterns, query_claims_metadata,
+    # Approval
+    approve_case,
+    # Audit
+    read_audit_log, log_decision,
+    # Session memory
+    memory_save, memory_load,
 ]
 
 
-# ── agent factory ─────────────────────────────────────────────────────────────
+# ── Agent factory ──────────────────────────────────────────────────────────────
 
-def build_system_prompt(role: str) -> str:
-    """Build the full system prompt for the given role, injecting current rules."""
-    rules = memory_manager.get_rules()
-    logger.info("[AGENT] build_system_prompt  role=%s rules_count=%d", role, len(rules))
-    rules_text = "\n".join(f"- {r}" for r in rules)
-    role_instruction = ROLE_INSTRUCTIONS.get(role, ROLE_INSTRUCTIONS["user"])
-    return (
-        SYSTEM_PROMPT.strip()
-        + "\n\n"
-        + role_instruction.strip()
-        + "\n\n"
-        + RULES_TEMPLATE.format(rules=rules_text).strip()
-    )
-
-
-def create_agent(role: str = "user") -> Agent:
+def create_agent(role: str = "end_user", user_id: str = "", session_id: str = "") -> Agent:
     """
-    Create a new Strands Agent for the given role.
-    A new agent is created per request so the system prompt always reflects
-    the current rules.
+    Create a Calvin agent instance for the given role.
+    A new instance is created per request so context is always fresh.
+
+    Args:
+        role:       end_user | support_exec | admin
+        user_id:    The caller's user ID (required for end_user role).
+        session_id: The current session identifier for memory continuity.
     """
-    logger.info("[AGENT] create_agent  role=%s model_id=%s region=%s", role, MODEL_ID, AWS_REGION)
-    retry_config = Config(retries={"max_attempts": 5, "mode": "adaptive"})
-    model = BedrockModel(
-        model_id=MODEL_ID,
-        region_name=AWS_REGION,
-        boto_client_config=retry_config,
+    logger.info("[AGENT] create_agent  role=%s user_id=%s session_id=%s", role, user_id, session_id)
+
+    # Inject role + identity context into the system prompt
+    context_block = (
+        f"\n\n=== CURRENT SESSION CONTEXT ===\n"
+        f"Role:       {role}\n"
+        f"User ID:    {user_id or 'unknown'}\n"
+        f"Session ID: {session_id or 'unknown'}\n"
+        f"=================================\n"
     )
+    system_prompt = CALVIN_SYSTEM_PROMPT + context_block
+
     agent = Agent(
-        model=model,
-        system_prompt=build_system_prompt(role),
+        model=get_model(),
+        system_prompt=system_prompt,
         tools=_ALL_TOOLS,
     )
-    logger.info("[AGENT] create_agent  ready  role=%s tools=%s", role, [t.__name__ for t in _ALL_TOOLS])
+    logger.info("[AGENT] create_agent  ready  role=%s tools=%d", role, len(_ALL_TOOLS))
     return agent
 
 
-# ── status helpers ────────────────────────────────────────────────────────────
-
-def _now_iso() -> str:
-    """Return the current UTC time as an ISO-8601 string."""
-    return datetime.now(timezone.utc).isoformat()
-
-
-def _write_json(path: Path, data: dict) -> None:
-    """Atomically write *data* as JSON to *path*.
-
-    Writes to a sibling `.tmp` file first, then renames it into place so
-    readers never see a partial write.  Creates missing parent directories.
-    """
-    path.parent.mkdir(parents=True, exist_ok=True)
-    tmp = str(path) + ".tmp"
-    with open(tmp, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=2)
-    os.replace(tmp, path)
-
-
-def _update_status(case_id: str, status: str, extra: dict | None = None) -> None:
-    """Merge *status* (and any *extra* fields) into the case's status.json.
-
-    If the file is missing or corrupt it is recreated from scratch.
-    ``updated_at`` is always refreshed to the current UTC timestamp.
-    """
-    status_path = Path(STORAGE_PATH) / "claims" / case_id / "status.json"
-    try:
-        with open(status_path, encoding="utf-8") as f:
-            data = json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError):
-        data = {}
-    data["status"] = status
-    data["updated_at"] = _now_iso()
-    if extra:
-        data.update(extra)
-    _write_json(status_path, data)
-
-
-# ── processing workflow ───────────────────────────────────────────────────────
-
-async def run_processing_workflow(
-    session_id: str, case_id: str, payload: dict
-) -> None:
-    """
-    Full autonomous claims processing workflow.
-    Called as an asyncio.Task from the service layer — runs in the background.
-    """
-    logger.info("[WORKFLOW] start  session_id=%s case_id=%s", session_id, case_id)
-    try:
-        _update_status(case_id, "PROCESSING")
-        logger.info("[WORKFLOW] status→PROCESSING  session_id=%s case_id=%s", session_id, case_id)
-
-        agent = create_agent(role="user")
-        task_message = (
-            f"Process this insurance claim autonomously.\n"
-            f"case_id: {case_id}\n"
-            f"session_id: {session_id}\n"
-            f"Claim data: {json.dumps(payload, indent=2)}\n\n"
-            f"Steps:\n"
-            f"1. If there is an uploaded document, use document_parser to read it.\n"
-            f"2. Analyse the claim against the current rules.\n"
-            f"3. Use write_analysis_result to save your analysis.\n"
-            f"4. Use write_decision_log to record your recommendation.\n"
-            f"5. Respond with a one-sentence summary for the approval request."
-        )
-
-        # Run agent synchronously in a thread to avoid blocking the event loop
-        logger.info("[WORKFLOW] invoking_agent  session_id=%s case_id=%s", session_id, case_id)
-        loop = asyncio.get_running_loop()
-        result = await loop.run_in_executor(None, agent, task_message)
-        summary = str(result).strip()[:500]
-        logger.info("[WORKFLOW] agent_done  session_id=%s case_id=%s summary_len=%d",
-                    session_id, case_id, len(summary))
-
-        # Pause for human approval
-        logger.info("[WORKFLOW] requesting_approval  session_id=%s case_id=%s", session_id, case_id)
-        decision = await approval_hook.request_approval(session_id, case_id, summary)
-        logger.info("[WORKFLOW] approval_decision=%s  session_id=%s case_id=%s", decision, session_id, case_id)
-
-        if decision == "approved":
-            _update_status(case_id, "CLOSING")
-            logger.info("[WORKFLOW] status→CLOSING  session_id=%s case_id=%s", session_id, case_id)
-            _write_json(
-                Path(STORAGE_PATH) / "claims" / case_id / "closure_summary.json",
-                {"decision": "approved", "summary": summary, "closed_at": _now_iso()},
-            )
-            _update_status(case_id, "CLOSED")
-            logger.info("[WORKFLOW] status→CLOSED  session_id=%s case_id=%s", session_id, case_id)
-        elif decision == "rejected":
-            _update_status(case_id, "REJECTED", {"rejection_reason": "Rejected by supervisor"})
-            logger.info("[WORKFLOW] status→REJECTED  session_id=%s case_id=%s", session_id, case_id)
-        # "expired" status already set by approval_hook
-
-    except Exception:
-        logger.exception("[WORKFLOW] failed  session_id=%s case_id=%s", session_id, case_id)
-        try:
-            _update_status(case_id, "ERROR")
-            logger.info("[WORKFLOW] status→ERROR  session_id=%s case_id=%s", session_id, case_id)
-        except Exception:
-            pass
-
-
-# ── SSE chat stream ───────────────────────────────────────────────────────────
+# ── SSE chat stream ────────────────────────────────────────────────────────────
 
 async def run_chat(
     session_id: str,
-    case_id: str,
     role: str,
+    user_id: str,
     message: str,
 ) -> AsyncGenerator[str, None]:
     """
@@ -219,27 +108,29 @@ async def run_chat(
       {"type": "done"}
       {"type": "error",       "message": "<msg>"}
     """
-    logger.info("[CHAT] run_chat  session_id=%s case_id=%s role=%s msg_len=%d",
-                session_id, case_id, role, len(message))
-    agent = create_agent(role)
+    logger.info(
+        "[CHAT] run_chat  session_id=%s role=%s user_id=%s msg_len=%d",
+        session_id, role, user_id, len(message),
+    )
+    agent = create_agent(role=role, user_id=user_id, session_id=session_id)
     event_count = 0
 
     try:
         async for event in agent.stream_async(message):
-            # TextStreamEvent yields {"data": "<token>", "delta": ...}
-            text = event.get("data", "") if isinstance(event, dict) else ""
-            if text:
-                event_count += 1
-                yield f"data: {json.dumps({'type': 'text-delta', 'content': text})}\n\n"
-                continue
+            if isinstance(event, dict):
+                text = event.get("data", "")
+                if text:
+                    event_count += 1
+                    yield f"data: {json.dumps({'type': 'text-delta', 'content': text})}\n\n"
+                    continue
 
-            # ToolUseStreamEvent yields {"current_tool_use": {"name": ...}, "delta": ...}
-            tool_use = event.get("current_tool_use") if isinstance(event, dict) else None
-            if tool_use and tool_use.get("name"):
-                tool_name = tool_use["name"]
-                logger.info("[CHAT] tool_invoked  session_id=%s tool=%s", session_id, tool_name)
-                event_count += 1
-                yield f"data: {json.dumps({'type': 'tool-status', 'tool': tool_name, 'status': 'running'})}\n\n"
+                tool_use = event.get("current_tool_use")
+                if tool_use and tool_use.get("name"):
+                    tool_name = tool_use["name"]
+                    logger.info("[CHAT] tool_invoked  session_id=%s tool=%s", session_id, tool_name)
+                    event_count += 1
+                    yield f"data: {json.dumps({'type': 'tool-status', 'tool': tool_name, 'status': 'running'})}\n\n"
+
     except Exception as exc:
         logger.error("[CHAT] agent_error  session_id=%s error=%s", session_id, exc)
         yield f"data: {json.dumps({'type': 'error', 'message': str(exc)})}\n\n"

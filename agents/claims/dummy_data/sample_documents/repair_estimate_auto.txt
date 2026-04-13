@@ -1,0 +1,23 @@
+REPAIR ESTIMATE
+==============
+Workshop: FastFix Auto Body, 55 Commerce Rd, Boston MA 02130
+Estimate Date: 2026-04-11    Estimate No: EST-4821
+Customer: Jane Smith    Vehicle: 2022 Toyota Camry    Plate: MA-7XK-391
+Policy: POL-1002
+
+PARTS
+Front bumper assembly ......................... $1,800.00
+Hood panel .................................... $1,200.00
+Radiator + coolant ........................... $950.00
+Airbag module (driver) ....................... $1,400.00
+Airbag module (passenger) .................... $1,200.00
+
+LABOUR
+Body panel removal/replacement (12 hrs @ $95) . $1,140.00
+Painting & finishing (8 hrs @ $95) ............ $760.00
+Mechanical alignment ......................... $350.00
+
+TOTAL ESTIMATE: $8,800.00
+
+Estimate valid for 30 days.
+Authorised by: Tom Walsh, Senior Estimator

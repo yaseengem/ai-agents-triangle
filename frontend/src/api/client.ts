@@ -5,18 +5,17 @@
  * or a real fetch-based implementation that talks to the FastAPI backends.
  */
 
-import type { AgentId } from '@/types/agent'
+import type { AgentId, Role } from '@/types/agent'
 import type {
   ApiClient,
   ApproveRequest,
+  CreateSessionResponse,
   FileRef,
   PostChatRequest,
-  PostProcessRequest,
-  ProcessResponse,
   RejectRequest,
   SSEEvent,
 } from '@/types/api'
-import type { RuleSet, SessionStatus, SessionSummary } from '@/types/session'
+import type { SessionStatus, SessionSummary } from '@/types/session'
 import { AGENTS } from '@/config/agents'
 import { createMockClient } from './mock'
 
@@ -42,14 +41,17 @@ function createRealClient(agentId: AgentId): ApiClient {
   }
 
   return {
-    postProcess: (req: PostProcessRequest) =>
-      apiFetch<ProcessResponse>('/process', { method: 'POST', body: JSON.stringify(req) }),
+    postCreateSession: (role: Role, userId: string) => {
+      const params = new URLSearchParams({ role, user_id: userId })
+      return apiFetch<CreateSessionResponse>(`/sessions?${params}`, { method: 'POST' })
+    },
 
-    async postUpload(file: File, caseId?: string, userId = 'anonymous'): Promise<FileRef> {
+    async postUpload(file: File, caseId?: string, userId = 'anonymous', sessionId?: string): Promise<FileRef> {
       const form = new FormData()
       form.append('file', file)
       form.append('user_id', userId)
       if (caseId) form.append('case_id', caseId)
+      if (sessionId) form.append('session_id', sessionId)
       const res = await fetch(`${base}/upload`, { method: 'POST', body: form })
       if (!res.ok) throw new Error(`Upload failed: ${res.status}`)
       return res.json() as Promise<FileRef>
@@ -95,16 +97,11 @@ function createRealClient(agentId: AgentId): ApiClient {
     getStatus: (sessionId: string) =>
       apiFetch<SessionStatus>(`/status/${sessionId}`),
 
-    postApprove: (sessionId: string, req: ApproveRequest) =>
-      apiFetch<void>(`/approve/${sessionId}`, { method: 'POST', body: JSON.stringify(req) }),
+    postApprove: (caseId: string, req: ApproveRequest) =>
+      apiFetch<void>(`/approve/${caseId}`, { method: 'POST', body: JSON.stringify(req) }),
 
-    postReject: (sessionId: string, req: RejectRequest) =>
-      apiFetch<void>(`/reject/${sessionId}`, { method: 'POST', body: JSON.stringify(req) }),
-
-    getRules: () => apiFetch<RuleSet>('/rules'),
-
-    postRules: (ruleset: RuleSet) =>
-      apiFetch<void>('/rules', { method: 'POST', body: JSON.stringify(ruleset) }),
+    postReject: (caseId: string, req: RejectRequest) =>
+      apiFetch<void>(`/reject/${caseId}`, { method: 'POST', body: JSON.stringify(req) }),
 
     getSessions: (filters?) => {
       const params = new URLSearchParams()

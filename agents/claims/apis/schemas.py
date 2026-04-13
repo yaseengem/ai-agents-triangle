@@ -1,4 +1,4 @@
-"""Pydantic v2 request/response schemas for the Claims API."""
+"""Pydantic v2 request/response schemas for the Calvin Claims API."""
 
 from __future__ import annotations
 
@@ -6,73 +6,46 @@ from typing import Literal, Optional
 from pydantic import BaseModel, Field
 
 
-class ProcessRequest(BaseModel):
-    """Body for ``POST /process`` — starts a new claims-processing workflow."""
-
-    case_id: str
-    payload: dict = Field(default_factory=dict)
-    user_id: str = "anonymous"
-
-
 class ChatRequest(BaseModel):
-    """Body for ``POST /chat/{session_id}`` — sends a message to the agent."""
+    """Body for POST /chat/{session_id} — send a message to Calvin."""
 
     message: str
-    role: Literal["user", "support", "admin"] = "user"
+    role: Literal["end_user", "support_exec", "admin"] = "end_user"
     user_id: str = "anonymous"
-    file_ref: Optional[str] = None  # set when the user just uploaded a file
-
-
-class ApprovalRequest(BaseModel):
-    """Optional body for ``POST /approve/{session_id}``."""
-
-    notes: Optional[str] = None
-
-
-class RejectionRequest(BaseModel):
-    """Body for ``POST /reject/{session_id}`` — must include a rejection reason."""
-
-    reason: str
-
-
-class WorkflowStatus(BaseModel):
-    """Full status record returned by ``GET /status/{session_id}``."""
-
-    session_id: str
-    case_id: str
-    status: str
-    created_at: str
-    updated_at: str
-    data: Optional[dict] = None
-
-
-class RuleSet(BaseModel):
-    """A list of processing rules used by ``GET /rules`` and ``POST /rules``."""
-
-    rules: list[str]
-
-
-class SessionSummary(BaseModel):
-    """Lightweight session record returned by ``GET /sessions``."""
-
-    session_id: str
-    case_id: str
-    status: str
-    created_at: str
-    updated_at: str
+    file_ref: Optional[str] = None  # set after POST /upload
 
 
 class FileUploadResponse(BaseModel):
-    """Response from ``POST /upload`` — includes the ``file_ref`` for chat use."""
+    """Response from POST /upload."""
 
-    file_ref: str     # "{case_id}/{filename}"
+    file_ref: str      # "{case_id}/{filename}" — pass to Calvin in chat
     case_id: str
     session_id: str
 
 
-class ProcessResponse(BaseModel):
-    """Response from ``POST /process`` — confirms session creation."""
+class SessionSummary(BaseModel):
+    """Lightweight session record returned by GET /sessions."""
 
     session_id: str
     case_id: str
     status: str
+    role: str
+    user_id: str
+    created_at: str
+    updated_at: str
+
+
+class ApproveRequest(BaseModel):
+    """Body for POST /approve/{case_id} — human approval shortcut."""
+
+    approver_id: str
+    notes: Optional[str] = ""
+    override_decision: Optional[str] = None
+    override_amount: Optional[str] = None
+
+
+class RejectRequest(BaseModel):
+    """Body for POST /reject/{case_id} — human rejection shortcut."""
+
+    approver_id: str
+    reason: str

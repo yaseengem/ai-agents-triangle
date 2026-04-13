@@ -29,23 +29,22 @@ export interface FileRef {
   session_id: string
 }
 
-export interface RuleSet {
-  rules: string[]
-}
-
 export interface SessionStatus {
   session_id: string
   case_id: string
   status: WorkflowStatus
+  role: string
+  user_id: string
   created_at: string
   updated_at: string
-  data?: Record<string, unknown>
 }
 
 export interface SessionSummary {
   session_id: string
   case_id: string
-  status: WorkflowStatus
+  status: string
+  role: string
+  user_id: string
   created_at: string
   updated_at: string
 }

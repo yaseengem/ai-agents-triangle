@@ -1,13 +1,8 @@
 """
-Claims Processing FastAPI application entry point.
+Calvin — Claims Processing FastAPI application entry point.
 
-Run from the agents/claims/apis/ directory:
-  uvicorn main:app --host 0.0.0.0 --port 8001
-
-IMPORTANT: Do NOT use --workers > 1.  The human-in-the-loop approval flow
-relies on asyncio.Event objects stored in process memory; multiple workers
-would each have isolated registries and POST /approve would miss the waiting
-workflow coroutine.
+Run from the repo root:
+  uvicorn agents.claims.apis.main:app --host 0.0.0.0 --port 8001 --reload
 """
 
 from __future__ import annotations
@@ -29,9 +24,9 @@ from .routes import router
 setup_logging()
 
 app = FastAPI(
-    title="Neural Claims API",
-    version="1.0.0",
-    description="Claims Processing agent — part of the Neural multi-agent platform.",
+    title="Calvin — ABC Insurance Claims API",
+    version="2.0.0",
+    description="Calvin: multi-agent claims processing (Strands Agents-as-Tools pattern).",
 )
 
 app.add_middleware(

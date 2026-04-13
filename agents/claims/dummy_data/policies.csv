@@ -1,0 +1,6 @@
+policy_no,holder_name,user_id,email,phone,policy_type,start_date,end_date,status,coverage_limit,deductible,covered_claim_types,exclusions,premium_monthly
+POL-1001,John Doe,USR-001,john.doe@example.com,555-0101,health,2025-01-01,2027-01-01,active,50000,500,health,cosmetic_surgery,450
+POL-1002,Jane Smith,USR-002,jane.smith@example.com,555-0102,auto,2025-03-01,2027-03-01,active,25000,1000,auto,racing,320
+POL-1003,Bob Kumar,USR-003,bob.kumar@example.com,555-0103,health,2023-01-01,2025-01-01,expired,30000,750,health,,380
+POL-1004,Alice Tan,USR-004,alice.tan@example.com,555-0104,health,2025-06-01,2027-06-01,active,40000,500,health,cosmetic_surgery,420
+POL-1005,Mike Chen,USR-005,mike.chen@example.com,555-0105,health,2025-02-01,2027-02-01,active,35000,600,health,,395

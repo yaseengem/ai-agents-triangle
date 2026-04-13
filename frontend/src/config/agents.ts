@@ -34,7 +34,7 @@ export function getAgent(id: AgentId): AgentConfig {
 }
 
 export const ROLE_DESCRIPTIONS: Record<string, string> = {
-  user: 'Submit documents, ask about your case, track progress.',
-  support: 'Query any case, view decisions, assist customers.',
-  admin: 'Manage agent rules, full audit access, all support capabilities.',
+  end_user: 'Submit documents, ask about your case, track progress.',
+  support_exec: 'Query any case, view decisions, approve or reject claims via chat.',
+  admin: 'Full access to all cases, audit logs, and approval actions.',
 }

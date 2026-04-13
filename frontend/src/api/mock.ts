@@ -8,15 +8,14 @@
 import type {
   ApiClient,
   ApproveRequest,
+  CreateSessionResponse,
   FileRef,
   PostChatRequest,
-  PostProcessRequest,
-  ProcessResponse,
   RejectRequest,
   SSEEvent,
 } from '@/types/api'
-import type { RuleSet, SessionStatus, SessionSummary, WorkflowStatus } from '@/types/session'
-import type { AgentId } from '@/types/agent'
+import type { SessionStatus, SessionSummary, WorkflowStatus } from '@/types/session'
+import type { AgentId, Role } from '@/types/agent'
 
 // ── per-agent mock case IDs ───────────────────────────────────────────────────
 const MOCK_CASE: Record<AgentId, string> = {
@@ -42,14 +41,6 @@ function _initSession(sessionId: string) {
     _statusTimers.set(sessionId, timer)
   }
 }
-
-// ── mock rules store ──────────────────────────────────────────────────────────
-let _mockRules: string[] = [
-  'Claims under $1,000 may be auto-approved if documentation is complete.',
-  'Claims over $50,000 require supervisor review before approval.',
-  'Medical claims require a physician\'s report.',
-  'Claims submitted more than 90 days after the incident date must be flagged.',
-]
 
 // ── mock response text snippets (per agent) ──────────────────────────────────
 const MOCK_RESPONSES: Record<AgentId, string[]> = {
@@ -84,11 +75,19 @@ export function createMockClient(agentId: AgentId): ApiClient {
   _initSession(sessionId)
 
   return {
-    // POST /process
-    async postProcess(_req: PostProcessRequest): Promise<ProcessResponse> {
+    // POST /sessions
+    async postCreateSession(_role: Role, _userId: string): Promise<CreateSessionResponse> {
       await delay(200)
       _initSession(sessionId)
-      return { session_id: sessionId, case_id: caseId, status: 'INITIATED' }
+      return {
+        session_id: sessionId,
+        case_id: caseId,
+        role: _role,
+        user_id: _userId,
+        status: 'INITIATED',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }
     },
 
     // POST /upload
@@ -142,33 +141,23 @@ export function createMockClient(agentId: AgentId): ApiClient {
         session_id: sessionId,
         case_id: caseId,
         status,
+        role: 'end_user',
+        user_id: 'mock-user',
         created_at: new Date(Date.now() - 60000).toISOString(),
         updated_at: new Date().toISOString(),
       }
     },
 
-    // POST /approve/{sessionId}
-    async postApprove(_sessionId: string, _req: ApproveRequest): Promise<void> {
+    // POST /approve/{caseId}
+    async postApprove(_caseId: string, _req: ApproveRequest): Promise<void> {
       await delay(100)
       _statusStore.set(sessionId, 'APPROVED')
     },
 
-    // POST /reject/{sessionId}
-    async postReject(_sessionId: string, _req: RejectRequest): Promise<void> {
+    // POST /reject/{caseId}
+    async postReject(_caseId: string, _req: RejectRequest): Promise<void> {
       await delay(100)
       _statusStore.set(sessionId, 'REJECTED')
-    },
-
-    // GET /rules
-    async getRules(): Promise<RuleSet> {
-      await delay(50)
-      return { rules: [..._mockRules] }
-    },
-
-    // POST /rules
-    async postRules(ruleset: RuleSet): Promise<void> {
-      await delay(100)
-      _mockRules = [...ruleset.rules]
     },
 
     // GET /sessions
@@ -179,6 +168,8 @@ export function createMockClient(agentId: AgentId): ApiClient {
           session_id: sessionId,
           case_id: caseId,
           status: _statusStore.get(sessionId) ?? 'PROCESSING',
+          role: 'end_user',
+          user_id: 'mock-user',
           created_at: new Date(Date.now() - 120000).toISOString(),
           updated_at: new Date().toISOString(),
         },
@@ -186,6 +177,8 @@ export function createMockClient(agentId: AgentId): ApiClient {
           session_id: `mock-session-${agentId}-002`,
           case_id: caseId.replace('001', '002'),
           status: 'CLOSED',
+          role: 'end_user',
+          user_id: 'mock-user-2',
           created_at: new Date(Date.now() - 3600000).toISOString(),
           updated_at: new Date(Date.now() - 1800000).toISOString(),
         },
@@ -193,6 +186,8 @@ export function createMockClient(agentId: AgentId): ApiClient {
           session_id: `mock-session-${agentId}-003`,
           case_id: caseId.replace('001', '003'),
           status: 'PENDING_HUMAN_APPROVAL',
+          role: 'end_user',
+          user_id: 'mock-user-3',
           created_at: new Date(Date.now() - 7200000).toISOString(),
           updated_at: new Date(Date.now() - 3600000).toISOString(),
         },

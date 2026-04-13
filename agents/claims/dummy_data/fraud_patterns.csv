@@ -1,0 +1,5 @@
+pattern_id,policy_no,user_id,flag_type,description,risk_level,flagged_date
+FP-001,POL-1004,USR-004,multiple_claims,Two claims exceeding $35000 within 90 days - pattern consistent with organised fraud,high,2026-03-25
+FP-002,POL-1002,USR-002,inflated_estimate,Repair estimate approximately 3x market rate for similar incidents in same region,medium,2026-01-20
+FP-003,POL-9999,,stolen_policy,Policy number used fraudulently - policy does not exist in active records,high,2025-12-01
+FP-004,POL-1005,USR-005,inconsistent_amounts,Claimed amounts inconsistent with documented diagnosis severity across multiple claims,medium,2026-03-30

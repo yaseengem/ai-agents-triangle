@@ -1,8 +1,8 @@
 /**
  * ApprovalBanner — amber banner shown when status is PENDING_HUMAN_APPROVAL.
  *
- * Approve button calls POST /approve/{sessionId}.
- * Reject button calls POST /reject/{sessionId}.
+ * Approve button calls POST /approve/{caseId}.
+ * Reject button calls POST /reject/{caseId}.
  * Both buttons are disabled while a decision is being submitted.
  */
 
@@ -12,11 +12,12 @@ import { getApiClient } from '@/api/client'
 
 interface ApprovalBannerProps {
   agentId: AgentId
-  sessionId: string
+  caseId: string
+  approverId: string
   onDecision?: (decision: 'approved' | 'rejected') => void
 }
 
-export function ApprovalBanner({ agentId, sessionId, onDecision }: ApprovalBannerProps) {
+export function ApprovalBanner({ agentId, caseId, approverId, onDecision }: ApprovalBannerProps) {
   const [submitting, setSubmitting] = useState(false)
   const [notes, setNotes] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -28,11 +29,11 @@ export function ApprovalBanner({ agentId, sessionId, onDecision }: ApprovalBanne
     try {
       const client = getApiClient(agentId)
       if (action === 'approve') {
-        await client.postApprove(sessionId, { notes: notes || undefined })
+        await client.postApprove(caseId, { approver_id: approverId, notes: notes || undefined })
         setDecided(true)
         onDecision?.('approved')
       } else {
-        await client.postReject(sessionId, { reason: notes || 'Rejected by reviewer' })
+        await client.postReject(caseId, { approver_id: approverId, reason: notes || 'Rejected by reviewer' })
         setDecided(true)
         onDecision?.('rejected')
       }

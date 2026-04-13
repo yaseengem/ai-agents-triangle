@@ -1,75 +1,48 @@
 """
-Memory manager for the Claims Processing agent.
+Session memory manager for Calvin.
 
-Wraps LocalMemoryStore to provide a typed, rule-oriented interface.
-A module-level singleton is created on import so all code in the process
-shares the same in-memory state (rules cache) on top of the persisted JSON.
+Provides a simple per-session key/value store backed by JSON files in
+data/sessions/. Used by the memory_save and memory_load tools to maintain
+context across chat turns (current case_id, user identity, active policy, etc).
 """
-
 from __future__ import annotations
 
+import json
 import os
-import sys
+from pathlib import Path
 
-# Add repo root to path so storage.memory_backend is importable when this
-# module is loaded from agents/claims/agentic/ via uvicorn.
-_REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
-if _REPO_ROOT not in sys.path:
-    sys.path.insert(0, _REPO_ROOT)
-
-from utils.logger import get_logger  # noqa: E402
-
-logger = get_logger(__name__)
-
-from storage.memory_backend import create_memory_backend  # noqa: E402
-from .prompts import DEFAULT_RULES  # noqa: E402
-
-_RULES_KEY = "agent_rules"
+_CLAIMS_BASE = Path(__file__).parent.parent  # agents/claims/
+_SESSIONS_DIR = _CLAIMS_BASE / "data" / "sessions"
 
 
-class ClaimsMemoryManager:
-    """Typed wrapper around the memory backend for claims rules."""
-
-    def __init__(self) -> None:
-        """Initialise the manager, creating the backend and seeding defaults."""
-        self._store = create_memory_backend("claims")
-        self._seed_defaults()
-
-    # ── seeding ──────────────────────────────────────────────────────────────
-
-    def _seed_defaults(self) -> None:
-        """Persist DEFAULT_RULES on first run if no rules are stored yet."""
-        if self._store.get(_RULES_KEY) is None:
-            self._store.set(_RULES_KEY, DEFAULT_RULES)
-
-    # ── rule access ──────────────────────────────────────────────────────────
-
-    def get_rules(self) -> list[str]:
-        """Return the current list of processing rules, falling back to defaults."""
-        rules = self._store.get(_RULES_KEY) or list(DEFAULT_RULES)
-        logger.debug("[MEMORY] get_rules  count=%d", len(rules))
-        return rules
-
-    def set_rules(self, rules: list[str]) -> None:
-        """Replace the entire rule list with *rules* and persist it."""
-        logger.info("[MEMORY] set_rules  count=%d", len(rules))
-        self._store.set(_RULES_KEY, rules)
-
-    def add_rule(self, rule: str) -> None:
-        """Append *rule* to the list if it is not already present."""
-        rules = self.get_rules()
-        if rule not in rules:
-            rules.append(rule)
-            self.set_rules(rules)
-            logger.info("[MEMORY] add_rule  rule=%s  new_total=%d", rule, len(rules))
-
-    def remove_rule(self, rule: str) -> None:
-        """Remove all occurrences of *rule* from the list and persist the result."""
-        rules = self.get_rules()
-        new_rules = [r for r in rules if r != rule]
-        self.set_rules(new_rules)
-        logger.info("[MEMORY] remove_rule  rule=%s  new_total=%d", rule, len(new_rules))
+def _session_file(session_id: str) -> Path:
+    _SESSIONS_DIR.mkdir(parents=True, exist_ok=True)
+    return _SESSIONS_DIR / f"{session_id}.json"
 
 
-# Module-level singleton — one instance per process.
-memory_manager = ClaimsMemoryManager()
+def load_session(session_id: str) -> dict:
+    """Load all session memory for *session_id*. Returns {} if not found."""
+    f = _session_file(session_id)
+    if not f.exists():
+        return {}
+    try:
+        return json.loads(f.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return {}
+
+
+def save_session(session_id: str, key: str, value: str) -> None:
+    """Save a single key/value pair to session memory."""
+    data = load_session(session_id)
+    data[key] = value
+    tmp = str(_session_file(session_id)) + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2)
+    os.replace(tmp, str(_session_file(session_id)))
+
+
+def delete_session(session_id: str) -> None:
+    """Remove session memory file if it exists."""
+    f = _session_file(session_id)
+    if f.exists():
+        f.unlink()

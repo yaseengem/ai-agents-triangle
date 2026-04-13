@@ -1,5 +1,5 @@
 export type AgentId = 'claims' | 'underwriting' | 'loan'
-export type Role = 'user' | 'support' | 'admin'
+export type Role = 'end_user' | 'support_exec' | 'admin'
 
 export interface AgentConfig {
   id: AgentId

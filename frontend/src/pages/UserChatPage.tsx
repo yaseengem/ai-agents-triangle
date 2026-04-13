@@ -21,7 +21,6 @@ import { FileUpload } from '@/components/chat/FileUpload'
 import { MessageBubble } from '@/components/chat/MessageBubble'
 import { ChatInputArea } from '@/components/chat/ChatInputArea'
 import { StatusBadge } from '@/components/ui/StatusBadge'
-import { ApprovalBanner } from '@/components/ui/ApprovalBanner'
 
 export function UserChatPage() {
   const { agentId } = useParams<{ agentId: string }>()
@@ -35,9 +34,9 @@ export function UserChatPage() {
   const { messages, isStreaming, error: chatError, sendMessage } = useChat(
     agentId as AgentId,
     sessionId,
-    'user',
+    'end_user',
   )
-  const { status, refresh: refreshStatus } = useAgentStatus(agentId as AgentId, sessionId)
+  const { status } = useAgentStatus(agentId as AgentId, sessionId)
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
@@ -47,9 +46,8 @@ export function UserChatPage() {
   // Create session immediately on mount so chat is available right away
   useEffect(() => {
     if (!agentId) return
-    const newCaseId = `user-${Date.now()}`
     getApiClient(agentId as AgentId)
-      .postProcess({ case_id: newCaseId, payload: {}, user_id: 'customer' })
+      .postCreateSession('end_user', 'customer')
       .then((res) => {
         setSessionId(res.session_id)
         setCaseId(res.case_id)
@@ -69,10 +67,6 @@ export function UserChatPage() {
     },
     [sendMessage],
   )
-
-  const handleDecision = useCallback(() => {
-    refreshStatus()
-  }, [refreshStatus])
 
   if (!agent) {
     return (
@@ -104,13 +98,21 @@ export function UserChatPage() {
         </p>
       )}
 
-      {/* Approval banner */}
+      {/* Pending review notice (informational only — approval happens via support chat) */}
       {sessionId && status === 'PENDING_HUMAN_APPROVAL' && (
-        <ApprovalBanner
-          agentId={agentId as AgentId}
-          sessionId={sessionId}
-          onDecision={handleDecision}
-        />
+        <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 flex items-start gap-3">
+          <span className="relative flex h-3 w-3 mt-0.5 flex-shrink-0">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+            <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500" />
+          </span>
+          <div>
+            <p className="text-sm font-semibold text-amber-800">Under Review</p>
+            <p className="text-xs text-amber-700 mt-0.5">
+              Your case has been reviewed by the AI and is awaiting a decision from our team.
+              You will be notified once a decision is made.
+            </p>
+          </div>
+        </div>
       )}
 
       {/* Message list */}

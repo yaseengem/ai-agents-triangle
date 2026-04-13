@@ -8,10 +8,11 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { getAgent, ROLE_DESCRIPTIONS } from '@/config/agents'
 import type { Role } from '@/types/agent'
 
-const ROLES: { id: Role; label: string; icon: string }[] = [
-  { id: 'user', label: 'Customer', icon: '👤' },
-  { id: 'support', label: 'Support Agent', icon: '🎧' },
-  { id: 'admin', label: 'Administrator', icon: '⚙️' },
+// path = URL segment; id = backend Role value
+const ROLES: { id: Role; path: string; label: string; icon: string }[] = [
+  { id: 'end_user', path: 'user', label: 'Customer', icon: '👤' },
+  { id: 'support_exec', path: 'support', label: 'Support Agent', icon: '🎧' },
+  { id: 'admin', path: 'admin', label: 'Administrator', icon: '⚙️' },
 ]
 
 export function RoleSelectPage() {
@@ -43,7 +44,7 @@ export function RoleSelectPage() {
           {ROLES.map((role) => (
             <button
               key={role.id}
-              onClick={() => navigate(`/agents/${agentId}/${role.id}`)}
+              onClick={() => navigate(`/agents/${agentId}/${role.path}`)}
               className="w-full flex items-center gap-4 rounded-2xl border-2 border-gray-200 bg-white px-5 py-4 text-left hover:border-blue-400 hover:bg-blue-50 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <span className="text-2xl" aria-hidden="true">

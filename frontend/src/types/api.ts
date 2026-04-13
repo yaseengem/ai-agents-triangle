@@ -1,15 +1,9 @@
 import type { Role } from './agent'
-import type { RuleSet, SessionStatus, SessionSummary, FileRef } from './session'
+import type { SessionStatus, SessionSummary, FileRef } from './session'
 
-export type { RuleSet, SessionStatus, SessionSummary, FileRef }
+export type { SessionStatus, SessionSummary, FileRef }
 
 // ── requests ──────────────────────────────────────────────────────────────────
-
-export interface PostProcessRequest {
-  case_id: string
-  payload: Record<string, unknown>
-  user_id: string
-}
 
 export interface PostChatRequest {
   message: string
@@ -19,19 +13,27 @@ export interface PostChatRequest {
 }
 
 export interface ApproveRequest {
+  approver_id: string
   notes?: string
+  override_decision?: string
+  override_amount?: string
 }
 
 export interface RejectRequest {
+  approver_id: string
   reason: string
 }
 
 // ── responses ─────────────────────────────────────────────────────────────────
 
-export interface ProcessResponse {
+export interface CreateSessionResponse {
   session_id: string
   case_id: string
+  role: string
+  user_id: string
   status: string
+  created_at: string
+  updated_at: string
 }
 
 // ── SSE event types ───────────────────────────────────────────────────────────
@@ -61,18 +63,16 @@ export type SSEEvent = SSETextDelta | SSEToolStatus | SSEDone | SSEError
 // ── API client interface ──────────────────────────────────────────────────────
 
 export interface ApiClient {
-  postProcess(request: PostProcessRequest): Promise<ProcessResponse>
-  postUpload(file: File, caseId?: string, userId?: string): Promise<FileRef>
+  postCreateSession(role: Role, userId: string): Promise<CreateSessionResponse>
+  postUpload(file: File, caseId?: string, userId?: string, sessionId?: string): Promise<FileRef>
   postChat(
     sessionId: string,
     request: PostChatRequest,
     onEvent: (event: SSEEvent) => void,
   ): Promise<void>
   getStatus(sessionId: string): Promise<SessionStatus>
-  postApprove(sessionId: string, request: ApproveRequest): Promise<void>
-  postReject(sessionId: string, request: RejectRequest): Promise<void>
-  getRules(): Promise<RuleSet>
-  postRules(ruleset: RuleSet): Promise<void>
+  postApprove(caseId: string, request: ApproveRequest): Promise<void>
+  postReject(caseId: string, request: RejectRequest): Promise<void>
   getSessions(filters?: {
     status?: string
     role?: string

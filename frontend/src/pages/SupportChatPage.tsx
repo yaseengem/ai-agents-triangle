@@ -32,7 +32,7 @@ export function SupportChatPage() {
   const { messages, isStreaming, error: chatError, sendMessage, clearMessages } = useChat(
     agentId as AgentId,
     sessionId,
-    'support',
+    'support_exec',
   )
   const { status } = useAgentStatus(agentId as AgentId, sessionId)
 
@@ -45,7 +45,7 @@ export function SupportChatPage() {
   useEffect(() => {
     if (!agentId) return
     getApiClient(agentId as AgentId)
-      .postProcess({ case_id: `support-${Date.now()}`, payload: {}, user_id: 'support' })
+      .postCreateSession('support_exec', 'support')
       .then((res) => setSessionId(res.session_id))
       .catch(() => setSessionError('Failed to start support session. Is the backend running?'))
   }, [agentId])
