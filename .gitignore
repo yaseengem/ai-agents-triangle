@@ -45,5 +45,12 @@ htmlcov/
 coverage.xml
 *.cover
 
+# Type checking
+.mypy_cache/
+
 # Logs
 *.log
+
+# Process / PID files
+*.pid
+scripts/pids/
