@@ -31,6 +31,7 @@ class ClaimsMemoryManager:
     """Typed wrapper around the memory backend for claims rules."""
 
     def __init__(self) -> None:
+        """Initialise the manager, creating the backend and seeding defaults."""
         self._store = create_memory_backend("claims")
         self._seed_defaults()
 
@@ -44,15 +45,18 @@ class ClaimsMemoryManager:
     # ── rule access ──────────────────────────────────────────────────────────
 
     def get_rules(self) -> list[str]:
+        """Return the current list of processing rules, falling back to defaults."""
         rules = self._store.get(_RULES_KEY) or list(DEFAULT_RULES)
         logger.debug("[MEMORY] get_rules  count=%d", len(rules))
         return rules
 
     def set_rules(self, rules: list[str]) -> None:
+        """Replace the entire rule list with *rules* and persist it."""
         logger.info("[MEMORY] set_rules  count=%d", len(rules))
         self._store.set(_RULES_KEY, rules)
 
     def add_rule(self, rule: str) -> None:
+        """Append *rule* to the list if it is not already present."""
         rules = self.get_rules()
         if rule not in rules:
             rules.append(rule)
@@ -60,6 +64,7 @@ class ClaimsMemoryManager:
             logger.info("[MEMORY] add_rule  rule=%s  new_total=%d", rule, len(rules))
 
     def remove_rule(self, rule: str) -> None:
+        """Remove all occurrences of *rule* from the list and persist the result."""
         rules = self.get_rules()
         new_rules = [r for r in rules if r != rule]
         self.set_rules(new_rules)

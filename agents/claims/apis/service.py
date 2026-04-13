@@ -32,10 +32,16 @@ DOMAIN = "claims"
 
 
 def _now_iso() -> str:
+    """Return the current UTC time as an ISO-8601 string."""
     return datetime.now(timezone.utc).isoformat()
 
 
 def _write_json(path: Path, data: dict) -> None:
+    """Atomically write *data* as JSON to *path*, creating parent dirs as needed.
+
+    Writes to a sibling `.tmp` file first, then renames into place so readers
+    never see a partial file.
+    """
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = str(path) + ".tmp"
     with open(tmp, "w", encoding="utf-8") as f:
@@ -44,6 +50,7 @@ def _write_json(path: Path, data: dict) -> None:
 
 
 def _read_json(path: Path) -> dict | None:
+    """Read and return the JSON object at *path*, or ``None`` if missing/corrupt."""
     try:
         with open(path, encoding="utf-8") as f:
             return json.load(f)

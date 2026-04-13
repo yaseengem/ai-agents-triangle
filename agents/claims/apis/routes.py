@@ -6,6 +6,8 @@ import os
 import uuid
 from typing import Optional
 
+from pathlib import Path
+
 from fastapi import APIRouter, File, Form, HTTPException, Query, UploadFile
 from fastapi.responses import StreamingResponse
 
@@ -38,6 +40,7 @@ _ALLOWED_SUFFIXES = {".pdf", ".png", ".jpg", ".jpeg", ".docx"}
 
 @router.get("/ping")
 def ping():
+    """Health-check endpoint. Returns ``{"status": "ok"}`` when the service is up."""
     return {"status": "ok", "agent": "claims"}
 
 
@@ -45,6 +48,14 @@ def ping():
 
 @router.post("/process", response_model=ProcessResponse)
 async def process(req: ProcessRequest):
+    """Start an autonomous claims-processing workflow for *case_id*.
+
+    Creates a new session, persists an INITIATED status file, and spawns a
+    background asyncio task that runs the full agent workflow.  Returns the
+    new ``session_id`` immediately so the client can poll ``GET /status``.
+
+    Raises 400 if the case already has an active (non-terminal) session.
+    """
     logger.info("[ROUTE] POST /process  case_id=%s user_id=%s payload_keys=%s",
                 req.case_id, req.user_id, list(req.payload.keys()) if req.payload else [])
     try:
@@ -65,6 +76,15 @@ async def upload(
     user_id: str = Form("anonymous"),
     case_id: Optional[str] = Form(None),
 ):
+    """Accept a claim document upload and save it to the case's input directory.
+
+    Accepted formats: pdf, png, jpg, jpeg, docx (max 20 MB).  If *case_id* is
+    omitted a new UUID is generated.  The returned ``file_ref`` value should be
+    passed to ``POST /chat`` so the agent can parse the document via the
+    ``document_parser`` tool.
+
+    Raises 415 for unsupported file types and 413 if the file exceeds 20 MB.
+    """
     logger.info("[ROUTE] POST /upload  filename=%s user_id=%s case_id=%s",
                 file.filename, user_id, case_id)
     # Validate extension
@@ -88,8 +108,6 @@ async def upload(
     resolved_case_id, session_id = service.prepare_upload_case(case_id)
 
     # Save to storage
-    import os as _os
-    from pathlib import Path
     input_dir = Path(STORAGE_PATH) / "claims" / resolved_case_id / "input"
     input_dir.mkdir(parents=True, exist_ok=True)
     safe_name = file.filename or f"upload_{uuid.uuid4().hex}{suffix}"
@@ -107,6 +125,14 @@ async def upload(
 
 @router.post("/chat/{session_id}")
 async def chat(session_id: str, req: ChatRequest):
+    """Open a streaming SSE chat session with the agent for an existing session.
+
+    Streams server-sent events of the form ``data: <json>\\n\\n``.  Event types:
+    ``text-delta`` (incremental token), ``tool-status`` (tool invocation notice),
+    ``done`` (stream finished), ``error`` (agent error).
+
+    Raises 404 if *session_id* is not found.
+    """
     logger.info("[ROUTE] POST /chat/%s  role=%s user_id=%s file_ref=%s msg_len=%d",
                 session_id, req.role, req.user_id, req.file_ref, len(req.message or ""))
     status = service.get_status(session_id)
@@ -131,6 +157,10 @@ async def chat(session_id: str, req: ChatRequest):
 
 @router.get("/status/{session_id}", response_model=WorkflowStatus)
 def get_status(session_id: str):
+    """Return the current workflow status for *session_id*.
+
+    Raises 404 if the session is not found.
+    """
     data = service.get_status(session_id)
     if data is None:
         raise HTTPException(status_code=404, detail="Session not found.")
@@ -141,6 +171,11 @@ def get_status(session_id: str):
 
 @router.post("/approve/{session_id}")
 def approve(session_id: str, req: ApprovalRequest = ApprovalRequest()):
+    """Approve the claim recommendation for a session that is PENDING_HUMAN_APPROVAL.
+
+    Signals the waiting workflow coroutine, which will then close the case.
+    Raises 404 if the session is not found, 400 if it is not pending approval.
+    """
     logger.info("[ROUTE] POST /approve/%s  notes=%s", session_id, req.notes)
     ok, err = service.record_decision(session_id, "approved", req.notes or "")
     if not ok:
@@ -154,6 +189,11 @@ def approve(session_id: str, req: ApprovalRequest = ApprovalRequest()):
 
 @router.post("/reject/{session_id}")
 def reject(session_id: str, req: RejectionRequest):
+    """Reject the claim recommendation for a session that is PENDING_HUMAN_APPROVAL.
+
+    Signals the waiting workflow coroutine, which will mark the case REJECTED.
+    Raises 404 if the session is not found, 400 if it is not pending approval.
+    """
     logger.info("[ROUTE] POST /reject/%s  reason=%s", session_id, req.reason)
     ok, err = service.record_decision(session_id, "rejected", req.reason)
     if not ok:
@@ -169,11 +209,13 @@ def reject(session_id: str, req: RejectionRequest):
 
 @router.get("/rules", response_model=RuleSet)
 def get_rules():
+    """Return the agent's current operating rules."""
     return RuleSet(rules=service.get_rules())
 
 
 @router.post("/rules")
 def post_rules(ruleset: RuleSet):
+    """Replace the agent's operating rules with the provided list."""
     service.set_rules(ruleset.rules)
     return {"status": "ok"}
 
@@ -186,6 +228,10 @@ def list_sessions(
     role: Optional[str] = Query(None),
     user_id: Optional[str] = Query(None),
 ):
+    """List all known sessions, optionally filtered by *status* or *user_id*.
+
+    Results are sorted by ``updated_at`` descending (most recent first).
+    """
     return service.list_sessions(
         status_filter=status,
         role_filter=role,

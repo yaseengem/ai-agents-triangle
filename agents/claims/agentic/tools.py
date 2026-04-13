@@ -34,14 +34,24 @@ _MAX_SEARCH_RESULTS = 20
 # ── helpers ───────────────────────────────────────────────────────────────────
 
 def _validate_case_id(case_id: str) -> bool:
+    """Return True if *case_id* contains only safe characters (alphanumerics, hyphens, underscores).
+
+    Prevents path traversal attacks when the value is used to build file paths.
+    """
     return bool(_CASE_ID_RE.match(case_id))
 
 
 def _case_dir(case_id: str) -> Path:
+    """Return the storage directory for a given case."""
     return Path(STORAGE_PATH) / DOMAIN / case_id
 
 
 def _write_json(path: Path, data: dict) -> str:
+    """Atomically write *data* as JSON to *path*, creating parent dirs as needed.
+
+    Returns ``"ok"`` on success so callers can forward the result directly to
+    the agent as a tool response.
+    """
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = str(path) + ".tmp"
     with open(tmp, "w", encoding="utf-8") as f:
@@ -51,6 +61,11 @@ def _write_json(path: Path, data: dict) -> str:
 
 
 def _read_json(path: Path) -> dict | str:
+    """Read and return the JSON object at *path*.
+
+    Returns a human-readable error string (instead of raising) so the agent
+    can include the message in its response when a file is missing or corrupt.
+    """
     try:
         with open(path, encoding="utf-8") as f:
             return json.load(f)

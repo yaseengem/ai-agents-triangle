@@ -102,10 +102,16 @@ def create_agent(role: str = "user") -> Agent:
 # ── status helpers ────────────────────────────────────────────────────────────
 
 def _now_iso() -> str:
+    """Return the current UTC time as an ISO-8601 string."""
     return datetime.now(timezone.utc).isoformat()
 
 
 def _write_json(path: Path, data: dict) -> None:
+    """Atomically write *data* as JSON to *path*.
+
+    Writes to a sibling `.tmp` file first, then renames it into place so
+    readers never see a partial write.  Creates missing parent directories.
+    """
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = str(path) + ".tmp"
     with open(tmp, "w", encoding="utf-8") as f:
@@ -114,6 +120,11 @@ def _write_json(path: Path, data: dict) -> None:
 
 
 def _update_status(case_id: str, status: str, extra: dict | None = None) -> None:
+    """Merge *status* (and any *extra* fields) into the case's status.json.
+
+    If the file is missing or corrupt it is recreated from scratch.
+    ``updated_at`` is always refreshed to the current UTC timestamp.
+    """
     status_path = Path(STORAGE_PATH) / "claims" / case_id / "status.json"
     try:
         with open(status_path, encoding="utf-8") as f:
