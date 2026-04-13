@@ -42,6 +42,29 @@ def _save_history(session_id: str, role: str, messages: list) -> None:
         json.dump(messages, fh, indent=2)
     os.replace(tmp, str(f))
 
+
+def _final_assistant_text(messages: list) -> str:
+    """
+    Extract the plain text from the last assistant message in a Strands/Bedrock
+    messages list.  Content blocks use the Anthropic converse format:
+      [{"type": "text", "text": "..."}, ...]
+    """
+    for msg in reversed(messages):
+        if not isinstance(msg, dict):
+            continue
+        if msg.get("role") != "assistant":
+            continue
+        content = msg.get("content", [])
+        if isinstance(content, str):
+            return content
+        if isinstance(content, list):
+            return "".join(
+                block.get("text", "")
+                for block in content
+                if isinstance(block, dict) and block.get("type") == "text"
+            )
+    return ""
+
 from strands import Agent  # noqa: E402
 
 from utils.logger import get_logger  # noqa: E402
@@ -150,19 +173,26 @@ async def run_chat(
     history = _load_history(session_id, role)
     agent = create_agent(role=role, user_id=user_id, session_id=session_id, history=history)
     event_count = 0
+    streamed_text = ""          # track what we've already sent as text-delta
+    seen_tools: set[str] = set()  # deduplicate tool-status events per tool name
 
     try:
         async for event in agent.stream_async(message):
-            if isinstance(event, dict):
-                text = event.get("data", "")
-                if text:
-                    event_count += 1
-                    yield f"data: {json.dumps({'type': 'text-delta', 'content': text})}\n\n"
-                    continue
+            if not isinstance(event, dict):
+                continue
 
-                tool_use = event.get("current_tool_use")
-                if tool_use and tool_use.get("name"):
-                    tool_name = tool_use["name"]
+            text = event.get("data", "")
+            if text:
+                streamed_text += text
+                event_count += 1
+                yield f"data: {json.dumps({'type': 'text-delta', 'content': text})}\n\n"
+                continue
+
+            tool_use = event.get("current_tool_use")
+            if tool_use and tool_use.get("name"):
+                tool_name = tool_use["name"]
+                if tool_name not in seen_tools:
+                    seen_tools.add(tool_name)
                     logger.info("[CHAT] tool_invoked  session_id=%s tool=%s", session_id, tool_name)
                     event_count += 1
                     yield f"data: {json.dumps({'type': 'tool-status', 'tool': tool_name, 'status': 'running'})}\n\n"
@@ -170,6 +200,20 @@ async def run_chat(
     except Exception as exc:
         logger.error("[CHAT] agent_error  session_id=%s error=%s", session_id, exc)
         yield f"data: {json.dumps({'type': 'error', 'message': str(exc)})}\n\n"
+
+    # Strands surfaces post-tool-call continuation text via its internal callback,
+    # not through the async iterator.  Recover it from the final assistant message.
+    try:
+        final_text = _final_assistant_text(agent.messages)
+        if final_text and not final_text.startswith(streamed_text):
+            # Full text wasn't streamed — send what's missing
+            remainder = final_text[len(streamed_text):]
+            if remainder.strip():
+                logger.info("[CHAT] flushing_remainder  session_id=%s chars=%d", session_id, len(remainder))
+                yield f"data: {json.dumps({'type': 'text-delta', 'content': remainder})}\n\n"
+                event_count += 1
+    except Exception as flush_exc:
+        logger.warning("[CHAT] flush_error  session_id=%s error=%s", session_id, flush_exc)
 
     # Persist updated conversation history for next turn
     try:

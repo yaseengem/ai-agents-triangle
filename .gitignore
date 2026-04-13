@@ -23,6 +23,9 @@ env/
 storage/
 !storage/**/.gitkeep
 
+# Session data
+agents/**/data/sessions/
+
 # Frontend build output
 frontend/dist/
 frontend/.env
