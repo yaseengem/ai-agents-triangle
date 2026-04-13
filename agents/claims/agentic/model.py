@@ -6,7 +6,7 @@ import os
 from botocore.config import Config
 from strands.models import BedrockModel
 
-_DEFAULT_MODEL = "anthropic.claude-sonnet-4-6"
+_DEFAULT_MODEL = "us.anthropic.claude-sonnet-4-20250514-v1:0"
 
 
 def get_model() -> BedrockModel:

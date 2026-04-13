@@ -14,6 +14,13 @@ def setup_logging(level: int = logging.INFO) -> None:
     global _configured
     if _configured:
         return
+    # Reconfigure sys.stdout/stderr to UTF-8 so libraries that write emoji or
+    # non-ASCII text directly (e.g. Strands streaming callbacks) don't raise
+    # UnicodeEncodeError on Windows where the default codec is cp1252.
+    if getattr(sys.stdout, "encoding", "utf-8").lower() != "utf-8":
+        sys.stdout = open(sys.stdout.fileno(), mode="w", encoding="utf-8", buffering=1, closefd=False)
+    if getattr(sys.stderr, "encoding", "utf-8").lower() != "utf-8":
+        sys.stderr = open(sys.stderr.fileno(), mode="w", encoding="utf-8", buffering=1, closefd=False)
     stream = open(sys.stdout.fileno(), mode="w", encoding="utf-8", buffering=1, closefd=False)
     handler = logging.StreamHandler(stream)
     handler.setFormatter(logging.Formatter(_FORMAT, datefmt=_DATE_FORMAT))
