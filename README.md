@@ -93,7 +93,7 @@ ai-agents/
 | Variable | Description | Default |
 |---|---|---|
 | `AWS_REGION` | AWS region for Bedrock | `us-east-1` |
-| `BEDROCK_MODEL_ID` | Bedrock model ID | `us.anthropic.claude-3-5-sonnet-20241022-v2:0` |
+| `BEDROCK_MODEL_ID` | Bedrock model ID | `anthropic.claude-3-haiku-20240307-v1:0` |
 | `STORAGE_PATH` | Root path for file system storage | `./storage` |
 | `MEMORY_BACKEND` | Memory backend: `local` or `agentcore` | `local` |
 | `CLAIMS_API_PORT` | Claims FastAPI port | `8001` |

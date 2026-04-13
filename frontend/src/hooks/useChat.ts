@@ -78,7 +78,7 @@ export function useChat(
                     : m,
                 ),
               )
-            } else if (event.type === 'tool-status') {
+            } else if (event.type === 'tool-status' && role !== 'end_user') {
               const toolEvt: ToolEvent = { tool: event.tool, status: event.status }
               setMessages((prev) =>
                 prev.map((m) =>

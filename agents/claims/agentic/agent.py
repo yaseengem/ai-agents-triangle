@@ -2,8 +2,8 @@
 Calvin — master claims processing agent for ABC Insurance.
 
 Provides:
-  create_agent(role, user_id, session_id)  → configured Strands Agent
-  run_chat(session_id, case_id, role, user_id, message)  → async SSE generator
+  create_agent(role, user_id, session_id, history)  → configured Strands Agent
+  run_chat(session_id, role, user_id, message)       → async SSE generator
 """
 
 from __future__ import annotations
@@ -12,10 +12,35 @@ import json
 import os
 import sys
 from collections.abc import AsyncGenerator
+from pathlib import Path
 
 _REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 if _REPO_ROOT not in sys.path:
     sys.path.insert(0, _REPO_ROOT)
+
+_HISTORY_DIR = Path(__file__).parent.parent / "data" / "sessions"
+
+
+def _load_history(session_id: str, role: str) -> list:
+    """Load persisted Strands message history for this session + role."""
+    _HISTORY_DIR.mkdir(parents=True, exist_ok=True)
+    f = _HISTORY_DIR / f"{session_id}_{role}_history.json"
+    if not f.exists():
+        return []
+    try:
+        return json.loads(f.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return []
+
+
+def _save_history(session_id: str, role: str, messages: list) -> None:
+    """Atomically persist Strands message history for this session + role."""
+    _HISTORY_DIR.mkdir(parents=True, exist_ok=True)
+    f = _HISTORY_DIR / f"{session_id}_{role}_history.json"
+    tmp = str(f) + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as fh:
+        json.dump(messages, fh, indent=2)
+    os.replace(tmp, str(f))
 
 from strands import Agent  # noqa: E402
 
@@ -60,19 +85,26 @@ _ALL_TOOLS = [
 
 # ── Agent factory ──────────────────────────────────────────────────────────────
 
-def create_agent(role: str = "end_user", user_id: str = "", session_id: str = "") -> Agent:
+def create_agent(
+    role: str = "end_user",
+    user_id: str = "",
+    session_id: str = "",
+    history: list | None = None,
+) -> Agent:
     """
     Create a Calvin agent instance for the given role.
-    A new instance is created per request so context is always fresh.
+    A new instance is created per request; prior conversation history is
+    restored via the `history` parameter so context is preserved across turns.
 
     Args:
         role:       end_user | support_exec | admin
         user_id:    The caller's user ID (required for end_user role).
         session_id: The current session identifier for memory continuity.
+        history:    Prior Strands message list to restore conversation context.
     """
-    logger.info("[AGENT] create_agent  role=%s user_id=%s session_id=%s", role, user_id, session_id)
+    logger.info("[AGENT] create_agent  role=%s user_id=%s session_id=%s history_msgs=%d",
+                role, user_id, session_id, len(history or []))
 
-    # Inject role + identity context into the system prompt
     context_block = (
         f"\n\n=== CURRENT SESSION CONTEXT ===\n"
         f"Role:       {role}\n"
@@ -86,6 +118,7 @@ def create_agent(role: str = "end_user", user_id: str = "", session_id: str = ""
         model=get_model(),
         system_prompt=system_prompt,
         tools=_ALL_TOOLS,
+        messages=history or [],
     )
     logger.info("[AGENT] create_agent  ready  role=%s tools=%d", role, len(_ALL_TOOLS))
     return agent
@@ -112,7 +145,10 @@ async def run_chat(
         "[CHAT] run_chat  session_id=%s role=%s user_id=%s msg_len=%d",
         session_id, role, user_id, len(message),
     )
-    agent = create_agent(role=role, user_id=user_id, session_id=session_id)
+
+    # Restore prior conversation so Calvin has full context across HTTP requests
+    history = _load_history(session_id, role)
+    agent = create_agent(role=role, user_id=user_id, session_id=session_id, history=history)
     event_count = 0
 
     try:
@@ -134,6 +170,13 @@ async def run_chat(
     except Exception as exc:
         logger.error("[CHAT] agent_error  session_id=%s error=%s", session_id, exc)
         yield f"data: {json.dumps({'type': 'error', 'message': str(exc)})}\n\n"
+
+    # Persist updated conversation history for next turn
+    try:
+        _save_history(session_id, role, agent.messages)
+        logger.info("[CHAT] history_saved  session_id=%s msgs=%d", session_id, len(agent.messages))
+    except Exception as save_exc:
+        logger.warning("[CHAT] history_save_failed  session_id=%s error=%s", session_id, save_exc)
 
     logger.info("[CHAT] stream_complete  session_id=%s events_emitted=%d", session_id, event_count)
     yield f"data: {json.dumps({'type': 'done'})}\n\n"

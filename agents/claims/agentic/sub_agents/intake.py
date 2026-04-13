@@ -6,7 +6,7 @@ from strands import Agent, tool
 from ..prompts import INTAKE_SYSTEM_PROMPT
 from ..tools.csv_store import generate_case_id, create_case_record, query_policies, update_case_csv
 from ..tools.audit_log import log_decision
-from ..tools.memory import memory_save
+from ..tools.memory import memory_save, memory_load
 from ..tools.utils import current_time
 
 
@@ -17,7 +17,7 @@ def _make_agent() -> Agent:
         system_prompt=INTAKE_SYSTEM_PROMPT,
         tools=[
             generate_case_id, create_case_record, query_policies,
-            update_case_csv, log_decision, memory_save, current_time,
+            update_case_csv, log_decision, memory_save, memory_load, current_time,
         ],
     )
 
@@ -25,11 +25,16 @@ def _make_agent() -> Agent:
 @tool
 def intake_agent(claim_input: str) -> str:
     """
-    Call this FIRST for any new claim submission or FNOL.
-    Handles: policy verification, claim type classification, triage priority assignment,
-    case record creation in claims_metadata.csv.
-    Input should include: claimant name, user_id, policy number, incident description,
-    incident date, and any initial claim amount.
-    Returns: case_id, claim_type, priority, policy status, and next recommended step.
+    Conversational intake specialist. Call this immediately when the user expresses any
+    intent to raise a claim, and on every subsequent turn while intake is in progress.
+
+    claim_input MUST be formatted as:
+        "[session_id: <session_id>]\\n<user message>"
+
+    The agent uses the session_id to load/save memory across turns so it knows
+    what has already been collected and what to ask for next.
+
+    Returns the next customer-facing message. When all required fields are collected
+    and the case record is created, the response ends with [INTAKE_COMPLETE] on its own line.
     """
     return str(_make_agent()(claim_input))

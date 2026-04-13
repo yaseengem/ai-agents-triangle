@@ -71,7 +71,7 @@ Install once from the repo root: `pip install -r requirements.txt`
 
 ```
 AWS_REGION, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
-BEDROCK_MODEL_ID=us.anthropic.claude-3-5-sonnet-20241022-v2:0
+BEDROCK_MODEL_ID=anthropic.claude-3-haiku-20240307-v1:0
 STORAGE_PATH=./storage          # /opt/ai-agents/storage on EC2
 MEMORY_BACKEND=local            # "local" | "agentcore" (future EP-7)
 CLAIMS_API_PORT=8001
