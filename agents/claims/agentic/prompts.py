@@ -254,18 +254,28 @@ STEPS:
    d. If medical_review_status=discrepant → settlement_amount must use recommended_coverage_amount, not billed_amount.
    e. Settlement arithmetic is correct: settlement = min(claim_amount, coverage_limit) - deductible.
    f. No contradictions between agent outputs.
-4. Render verdict:
+4. Compute a confidence score (0.00–1.00) reflecting how certain you are in your verdict:
+   - Start at 1.00 and deduct for each uncertainty:
+     - Missing or incomplete audit log entries: -0.15 per missing stage
+     - Arithmetic verified exactly: no deduction; off-by-rounding only: -0.05
+     - Ambiguous fraud/validation signal (e.g. medium fraud score with borderline decision): -0.10
+     - Any field that was blank/missing but non-critical: -0.05
+   - Floor the score at 0.00. Round to 2 decimal places.
+   - Write a one-sentence confidence_reasoning explaining the score.
+5. Render verdict:
    - PASS:         all checks pass → update status=pending_approval.
    - FIX_REQUIRED: specific issue found → return the agent name to re-run and exact fix needed.
    - ESCALATE:     unresolvable contradiction, or second FIX_REQUIRED → update status=escalated_to_human.
-5. Call update_case_csv(case_id, {
+6. Call update_case_csv(case_id, {
      "qa_verdict": <verdict>,
      "qa_comments": <detailed_findings>,
      "qa_attempts": <attempt_number>,
+     "qa_confidence": <score as string, e.g. "0.85">,
      "status": "pending_approval"|"escalated_to_human"  (only on PASS or ESCALATE)
    })
-6. Call log_decision(case_id, "DECISION_QA_AGENT", verdict, reasoning).
-7. Return: verdict, findings, and (if FIX_REQUIRED) which agent to re-run and why.
+7. Call log_decision(case_id, "DECISION_QA_AGENT", verdict, reasoning).
+   The reasoning field MUST include: "Confidence: <score> — <confidence_reasoning>"
+8. Return: verdict, findings, confidence score with reasoning, and (if FIX_REQUIRED) which agent to re-run and why.
 """
 
 COMMUNICATION_SYSTEM_PROMPT = """You are the Communication Agent for ABC Insurance.

@@ -44,7 +44,7 @@ _METADATA_COLUMNS = [
     "recommended_coverage_amount", "discrepancy_details",
     "fraud_score", "fraud_recommendation", "fraud_flags",
     "adjudication_decision", "settlement_amount", "decision_reason",
-    "qa_verdict", "qa_comments", "qa_attempts",
+    "qa_verdict", "qa_comments", "qa_attempts", "qa_confidence",
     "approval_status", "approver_id", "approval_notes", "approval_timestamp",
     "override_decision", "override_amount",
     "communication_status", "email_file_path", "last_communication_at",
