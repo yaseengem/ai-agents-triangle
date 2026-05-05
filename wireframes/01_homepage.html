@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AgentIQ — AI Agent Marketplace</title>
+<style>
+:root{
+  --bg:#0D0F12;--s:#161A20;--s2:#1E2329;--s3:#252B33;
+  --b:#2A3040;--b2:#353D4A;--t:#F0F2F5;--t2:#8B95A3;--t3:#545F6E;
+  --ac:#4F8EF7;--acd:#1C2E4A;--gn:#34D399;--gnd:#0D2E22;
+  --am:#FBBF24;--amd:#2D2210;--rd:#F87171;--rdd:#2D1010;
+  --tl:#2DD4BF;--tld:#0D2D2A;--pu:#A78BFA;--pud:#1E1635;
+  --co:#FB923C;--cod:#2D1A0D;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;background:var(--bg);color:var(--t);font-size:14px;line-height:1.6;overflow-x:hidden;}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;height:56px;padding:0 40px;display:flex;align-items:center;justify-content:space-between;background:rgba(13,15,18,0.95);border-bottom:1px solid var(--b);backdrop-filter:blur(8px);}
+.logo{display:flex;align-items:center;gap:9px;cursor:pointer;text-decoration:none;}
+.logo-mark{width:30px;height:30px;background:var(--ac);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:15px;}
+.logo-text{font-size:15px;font-weight:700;color:var(--t);}
+.logo-text span{color:var(--ac);}
+.nav-links{display:flex;align-items:center;gap:28px;}
+.nav-links a{font-size:13px;color:var(--t2);cursor:pointer;text-decoration:none;transition:color .15s;}
+.nav-links a:hover{color:var(--t);}
+.nav-right{display:flex;align-items:center;gap:8px;}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;font-family:inherit;font-size:13px;font-weight:500;padding:8px 16px;border-radius:7px;cursor:pointer;border:1px solid var(--b2);background:var(--s2);color:var(--t);transition:all .15s;text-decoration:none;}
+.btn:hover{background:var(--s3);}
+.btn-p{background:var(--ac);border-color:var(--ac);color:#fff;}
+.btn-p:hover{background:#6b9ff8;}
+.btn-sm{font-size:12px;padding:6px 13px;}
+.btn-lg{font-size:15px;padding:12px 26px;border-radius:8px;}
+.tag{display:inline-flex;align-items:center;font-size:11px;font-weight:500;padding:3px 9px;border-radius:20px;}
+.tb{background:var(--acd);color:var(--ac);}
+.tg{background:var(--gnd);color:var(--gn);}
+.tam{background:var(--amd);color:var(--am);}
+.tr{background:var(--rdd);color:var(--rd);}
+.tt{background:var(--tld);color:var(--tl);}
+.tp{background:var(--pud);color:var(--pu);}
+.tco{background:var(--cod);color:var(--co);}
+.tgr{background:var(--s3);color:var(--t2);}
+
+/* HERO */
+.hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 40px 60px;position:relative;overflow:hidden;text-align:center;}
+.hero-bg{position:absolute;inset:0;pointer-events:none;}
+.grid{position:absolute;inset:0;background-image:linear-gradient(var(--b) 1px,transparent 1px),linear-gradient(90deg,var(--b) 1px,transparent 1px);background-size:56px 56px;opacity:.2;}
+.glow{position:absolute;border-radius:50%;filter:blur(90px);}
+.hero-content{position:relative;z-index:1;max-width:800px;}
+.badge{display:inline-flex;align-items:center;gap:8px;background:var(--acd);border:1px solid rgba(79,142,247,.35);border-radius:20px;padding:6px 16px;font-size:12px;font-weight:500;color:var(--ac);margin-bottom:28px;}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--ac);display:inline-block;}
+h1{font-size:58px;font-weight:700;line-height:1.08;letter-spacing:-1.5px;color:var(--t);margin-bottom:20px;}
+h1 em{font-style:italic;color:var(--ac);}
+.hero-sub{font-size:17px;color:var(--t2);line-height:1.75;max-width:560px;margin:0 auto 36px;font-weight:300;}
+.hero-ctas{display:flex;align-items:center;gap:12px;justify-content:center;}
+.hero-stats{display:flex;align-items:center;gap:36px;margin-top:60px;justify-content:center;flex-wrap:wrap;}
+.stat-item{text-align:center;}
+.stat-num{font-size:32px;font-weight:700;color:var(--t);line-height:1;}
+.stat-label{font-size:12px;color:var(--t3);margin-top:4px;}
+.stat-div{width:1px;height:34px;background:var(--b2);}
+
+/* SECTIONS */
+section{padding:64px 40px;}
+.section-header{text-align:center;margin-bottom:48px;}
+.eyebrow{font-size:11px;font-weight:600;color:var(--ac);text-transform:uppercase;letter-spacing:.1em;margin-bottom:11px;}
+h2{font-size:36px;font-weight:700;color:var(--t);margin-bottom:12px;letter-spacing:-.5px;}
+.sec-sub{font-size:15px;color:var(--t2);max-width:500px;margin:0 auto;line-height:1.7;}
+.max{max-width:1060px;margin:0 auto;}
+
+/* INDUSTRY GRID */
+.ind-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:15px;}
+.ind-card{background:var(--s);border:1px solid var(--b);border-radius:14px;padding:26px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;}
+.ind-card:hover{transform:translateY(-3px);}
+.ind-icon{width:46px;height:46px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:21px;margin-bottom:14px;}
+.ind-name{font-size:16px;font-weight:600;color:var(--t);margin-bottom:6px;}
+.ind-desc{font-size:13px;color:var(--t2);line-height:1.65;margin-bottom:15px;}
+.ind-footer{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;}
+.ind-tags{display:flex;gap:5px;flex-wrap:wrap;}
+.ind-count{font-size:12px;color:var(--t3);white-space:nowrap;}
+.ind-arrow{font-size:16px;color:var(--t3);transition:all .2s;flex-shrink:0;}
+.ind-card:hover .ind-arrow{color:var(--t);transform:translateX(4px);}
+.ins:hover{border-color:rgba(79,142,247,.5);}
+.hc:hover{border-color:rgba(52,211,153,.5);}
+.re:hover{border-color:rgba(251,191,36,.5);}
+.bk:hover{border-color:rgba(167,139,250,.5);}
+.lg:hover{border-color:rgba(45,212,191,.5);}
+.hr:hover{border-color:rgba(251,146,60,.5);}
+
+/* HOW IT WORKS */
+.how-sec{background:var(--s);border-top:1px solid var(--b);border-bottom:1px solid var(--b);}
+.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;position:relative;}
+.steps::before{content:'';position:absolute;top:26px;left:12%;right:12%;height:1px;background:var(--b2);}
+.step{text-align:center;position:relative;z-index:1;}
+.step-num{width:52px;height:52px;border-radius:50%;border:1px solid var(--b2);background:var(--s2);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:16px;font-weight:700;color:var(--ac);}
+.step-title{font-size:14px;font-weight:600;color:var(--t);margin-bottom:7px;}
+.step-desc{font-size:13px;color:var(--t2);line-height:1.65;}
+
+/* FEATURED AGENTS */
+.agents-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:15px;}
+.agent-card{background:var(--s);border:1px solid var(--b);border-radius:12px;padding:20px;transition:all .2s;cursor:pointer;}
+.agent-card:hover{border-color:var(--b2);transform:translateY(-2px);}
+.ac-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:11px;}
+.ac-icon{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;}
+.ac-price{font-size:13px;font-weight:700;color:var(--gn);}
+.ac-name{font-size:14px;font-weight:600;color:var(--t);margin-bottom:3px;}
+.ac-by{font-size:11px;color:var(--t3);}
+.ac-desc{font-size:12px;color:var(--t2);line-height:1.65;margin:9px 0 12px;}
+.ac-footer{display:flex;align-items:center;justify-content:space-between;}
+.ac-rating{font-size:12px;color:var(--t3);}
+.ac-rating .star{color:var(--am);}
+
+/* TRUST */
+.trust-items{display:flex;align-items:flex-start;justify-content:center;gap:44px;flex-wrap:wrap;}
+.trust-item{display:flex;align-items:flex-start;gap:12px;max-width:190px;}
+.trust-icon{width:38px;height:38px;border-radius:9px;background:var(--s2);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.trust-text strong{display:block;font-size:13px;font-weight:600;color:var(--t);margin-bottom:2px;}
+.trust-text span{font-size:12px;color:var(--t2);}
+
+/* CTA */
+.cta-box{background:var(--s);border:1px solid var(--b);border-radius:20px;padding:60px 48px;max-width:660px;margin:0 auto;text-align:center;position:relative;overflow:hidden;}
+.cta-glow{position:absolute;top:-80px;left:50%;transform:translateX(-50%);width:400px;height:400px;background:var(--ac);border-radius:50%;filter:blur(100px);opacity:.07;}
+.cta-title{font-size:34px;font-weight:700;color:var(--t);margin-bottom:12px;position:relative;letter-spacing:-.5px;}
+.cta-sub{font-size:14px;color:var(--t2);margin-bottom:26px;position:relative;}
+.cta-actions{display:flex;align-items:center;gap:10px;justify-content:center;position:relative;}
+
+/* FOOTER */
+footer{padding:26px 40px;border-top:1px solid var(--b);display:flex;align-items:center;justify-content:space-between;}
+.foot-left{font-size:12px;color:var(--t3);}
+.foot-links{display:flex;gap:20px;}
+.foot-links a{font-size:12px;color:var(--t3);cursor:pointer;text-decoration:none;}
+.foot-links a:hover{color:var(--t2);}
+
+/* FADE IN */
+.fi{opacity:0;transform:translateY(16px);transition:opacity .5s ease,transform .5s ease;}
+.fi.v{opacity:1;transform:none;}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a class="logo" href="01_homepage.html">
+    <div class="logo-mark">🤖</div>
+    <span class="logo-text">Agent<span>IQ</span></span>
+  </a>
+  <div class="nav-links">
+    <a href="01_homepage.html">Home</a>
+    <a href="02_browse.html">Browse Agents</a>
+    <a href="05_dashboard.html">My Agents</a>
+    <a href="#">Pricing</a>
+    <a href="#">Docs</a>
+  </div>
+  <div class="nav-right">
+    <button class="btn btn-sm">Sign in</button>
+    <button class="btn btn-sm btn-p" onclick="location.href='02_browse.html'">Get started</button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg">
+    <div class="grid"></div>
+    <div class="glow" style="width:700px;height:700px;background:var(--ac);top:-200px;left:50%;transform:translateX(-50%);opacity:.12;"></div>
+    <div class="glow" style="width:380px;height:380px;background:var(--tl);bottom:0;left:3%;opacity:.1;"></div>
+    <div class="glow" style="width:340px;height:340px;background:var(--pu);bottom:0;right:3%;opacity:.1;"></div>
+  </div>
+  <div class="hero-content">
+    <div class="badge"><span class="dot"></span> AI agents built for regulated industries</div>
+    <h1>The marketplace for<br/><em>intelligent</em> AI agents</h1>
+    <p class="hero-sub">Find, deploy and run pre-built AI agents for insurance, healthcare, real estate, banking and more — no engineering required.</p>
+    <div class="hero-ctas">
+      <button class="btn btn-p btn-lg" onclick="location.href='02_browse.html'">Browse agents &rarr;</button>
+      <button class="btn btn-lg" onclick="document.getElementById('how').scrollIntoView({behavior:'smooth'})">How it works</button>
+    </div>
+    <div class="hero-stats">
+      <div class="stat-item"><div class="stat-num">180+</div><div class="stat-label">AI agents</div></div>
+      <div class="stat-div"></div>
+      <div class="stat-item"><div class="stat-num">12</div><div class="stat-label">Industries</div></div>
+      <div class="stat-div"></div>
+      <div class="stat-item"><div class="stat-num">2,400+</div><div class="stat-label">Businesses using AgentIQ</div></div>
+      <div class="stat-div"></div>
+      <div class="stat-item"><div class="stat-num">99.4%</div><div class="stat-label">Uptime SLA</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- INDUSTRIES -->
+<section style="padding:64px 40px;border-top:1px solid var(--b);">
+  <div class="section-header fi max">
+    <div class="eyebrow">Built for your industry</div>
+    <h2>Agents for every regulated sector</h2>
+    <p class="sec-sub">Each agent is purpose-built for the compliance, workflow and data requirements of its industry.</p>
+  </div>
+  <div class="ind-grid max fi">
+
+    <div class="ind-card ins fi" style="grid-column:span 2;" onclick="location.href='02_browse.html?industry=insurance'">
+      <div class="ind-icon" style="background:var(--acd);">🏥</div>
+      <div class="ind-name">Insurance</div>
+      <div class="ind-desc">End-to-end agents for claims processing, underwriting, policy management and fraud detection. Built for HIPAA, SOC 2 and state DOI compliance. The most deployed category on AgentIQ.</div>
+      <div class="ind-footer">
+        <div>
+          <div class="ind-tags"><span class="tag tb">Claims Processing</span><span class="tag tb">Underwriting</span><span class="tag tb">Fraud Detection</span><span class="tag tb">Policy Review</span></div>
+          <div class="ind-count" style="margin-top:9px;">48 agents available</div>
+        </div>
+        <span class="ind-arrow">&rarr;</span>
+      </div>
+    </div>
+
+    <div class="ind-card hc fi" onclick="location.href='02_browse.html?industry=healthcare'">
+      <div class="ind-icon" style="background:var(--gnd);">🩺</div>
+      <div class="ind-name">Healthcare</div>
+      <div class="ind-desc">Prior authorization, patient intake, medical coding review and care coordination agents.</div>
+      <div class="ind-footer">
+        <div>
+          <div class="ind-tags"><span class="tag tg">Prior Auth</span><span class="tag tg">Coding</span></div>
+          <div class="ind-count" style="margin-top:9px;">32 agents available</div>
+        </div>
+        <span class="ind-arrow">&rarr;</span>
+      </div>
+    </div>
+
+    <div class="ind-card re fi" onclick="location.href='02_browse.html?industry=realestate'">
+      <div class="ind-icon" style="background:var(--amd);">🏠</div>
+      <div class="ind-name">Real Estate</div>
+      <div class="ind-desc">Loan onboarding, title review, appraisal processing and compliance screening agents.</div>
+      <div class="ind-footer">
+        <div>
+          <div class="ind-tags"><span class="tag tam">Loan Onboarding</span><span class="tag tam">Title Review</span></div>
+          <div class="ind-count" style="margin-top:9px;">24 agents available</div>
+        </div>
+        <span class="ind-arrow">&rarr;</span>
+      </div>
+    </div>
+
+    <div class="ind-card bk fi" onclick="location.href='02_browse.html?industry=banking'">
+      <div class="ind-icon" style="background:var(--pud);">🏦</div>
+      <div class="ind-name">Banking &amp; Finance</div>
+      <div class="ind-desc">KYC/AML screening, loan decisioning, fraud monitoring and regulatory reporting.</div>
+      <div class="ind-footer">
+        <div>
+          <div class="ind-tags"><span class="tag tp">KYC/AML</span><span class="tag tp">Loan Decisioning</span></div>
+          <div class="ind-count" style="margin-top:9px;">36 agents available</div>
+        </div>
+        <span class="ind-arrow">&rarr;</span>
+      </div>
+    </div>
+
+    <div class="ind-card lg fi" onclick="location.href='02_browse.html?industry=legal'">
+      <div class="ind-icon" style="background:var(--tld);">⚖️</div>
+      <div class="ind-name">Legal</div>
+      <div class="ind-desc">Contract review, due diligence, compliance monitoring and e-discovery agents.</div>
+      <div class="ind-footer">
+        <div>
+          <div class="ind-tags"><span class="tag tt">Contracts</span><span class="tag tt">Due Diligence</span></div>
+          <div class="ind-count" style="margin-top:9px;">18 agents available</div>
+        </div>
+        <span class="ind-arrow">&rarr;</span>
+      </div>
+    </div>
+
+    <div class="ind-card hr fi" onclick="location.href='02_browse.html?industry=hr'">
+      <div class="ind-icon" style="background:var(--cod);">👥</div>
+      <div class="ind-name">HR &amp; Workforce</div>
+      <div class="ind-desc">Benefits enrollment, onboarding, leave management and compliance tracking.</div>
+      <div class="ind-footer">
+        <div>
+          <div class="ind-tags"><span class="tag tco">Benefits</span><span class="tag tco">Onboarding</span></div>
+          <div class="ind-count" style="margin-top:9px;">22 agents available</div>
+        </div>
+        <span class="ind-arrow">&rarr;</span>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how-sec" id="how" style="padding:64px 40px;">
+  <div class="section-header fi max">
+    <div class="eyebrow">How it works</div>
+    <h2>From browse to running in minutes</h2>
+  </div>
+  <div class="steps max fi">
+    <div class="step">
+      <div class="step-num">01</div>
+      <div class="step-title">Browse &amp; select</div>
+      <div class="step-desc">Filter by industry, capability and compliance. Read agent specs, reviews and pricing before committing.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">02</div>
+      <div class="step-title">Connect your systems</div>
+      <div class="step-desc">One-click integrations with Guidewire, Epic, Salesforce, SAP and 300+ enterprise tools.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">03</div>
+      <div class="step-title">Configure rules</div>
+      <div class="step-desc">Set approval thresholds and escalation rules in plain English. No coding required.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">04</div>
+      <div class="step-title">Deploy &amp; monitor</div>
+      <div class="step-desc">Full audit trails, AI reasoning logs and human-in-the-loop controls built into every workflow.</div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURED AGENTS -->
+<section style="padding:64px 40px;">
+  <div class="section-header fi max">
+    <div class="eyebrow">Featured agents</div>
+    <h2>Most deployed this month</h2>
+  </div>
+  <div class="agents-grid max fi">
+
+    <div class="agent-card" onclick="location.href='03_agent_detail.html'">
+      <div class="ac-top">
+        <div class="ac-icon" style="background:var(--acd);">🔍</div>
+        <div class="ac-price">$199/mo</div>
+      </div>
+      <div class="ac-name">Claims Processing Agent</div>
+      <div class="ac-by">by InsureTech Labs &bull; Insurance</div>
+      <div class="ac-desc">End-to-end health claim intake, document validation, medical review, fraud check and adjudication with full human-in-the-loop approval workflow.</div>
+      <div class="ac-footer">
+        <div class="ac-rating"><span class="star">&#9733;</span> 4.9 &bull; 340 deployments</div>
+        <span class="tag tb">Health Insurance</span>
+      </div>
+    </div>
+
+    <div class="agent-card" onclick="location.href='02_browse.html'">
+      <div class="ac-top">
+        <div class="ac-icon" style="background:var(--gnd);">📋</div>
+        <div class="ac-price">$149/mo</div>
+      </div>
+      <div class="ac-name">Group Underwriting Agent</div>
+      <div class="ac-by">by RiskAI Corp &bull; Insurance</div>
+      <div class="ac-desc">Automated risk scoring, member eligibility review and premium calculation for group health insurance plans. Integrates with EPIC and Facets.</div>
+      <div class="ac-footer">
+        <div class="ac-rating"><span class="star">&#9733;</span> 4.7 &bull; 210 deployments</div>
+        <span class="tag tg">Underwriting</span>
+      </div>
+    </div>
+
+    <div class="agent-card" onclick="location.href='02_browse.html'">
+      <div class="ac-top">
+        <div class="ac-icon" style="background:var(--amd);">🏠</div>
+        <div class="ac-price">$179/mo</div>
+      </div>
+      <div class="ac-name">Loan Onboarding Agent</div>
+      <div class="ac-by">by PropFlow AI &bull; Real Estate</div>
+      <div class="ac-desc">Automates real estate loan application intake, document verification, title checks and HMDA compliance screening.</div>
+      <div class="ac-footer">
+        <div class="ac-rating"><span class="star">&#9733;</span> 4.8 &bull; 180 deployments</div>
+        <span class="tag tam">Real Estate</span>
+      </div>
+    </div>
+
+  </div>
+  <div style="text-align:center;margin-top:28px;" class="fi">
+    <button class="btn btn-lg" onclick="location.href='02_browse.html'">View all 180+ agents &rarr;</button>
+  </div>
+</section>
+
+<!-- TRUST -->
+<section style="padding:56px 40px;border-top:1px solid var(--b);">
+  <div class="trust-items fi max">
+    <div class="trust-item">
+      <div class="trust-icon">🔒</div>
+      <div class="trust-text"><strong>HIPAA &amp; SOC 2</strong><span>Compliant infrastructure for regulated industries</span></div>
+    </div>
+    <div class="trust-item">
+      <div class="trust-icon">🧾</div>
+      <div class="trust-text"><strong>Full audit trails</strong><span>Every agent action logged and traceable</span></div>
+    </div>
+    <div class="trust-item">
+      <div class="trust-icon">👁️</div>
+      <div class="trust-text"><strong>AI transparency</strong><span>Step-by-step reasoning visible on every run</span></div>
+    </div>
+    <div class="trust-item">
+      <div class="trust-icon">🤝</div>
+      <div class="trust-text"><strong>Human-in-the-loop</strong><span>Configurable approval workflows built in</span></div>
+    </div>
+    <div class="trust-item">
+      <div class="trust-icon">⚡</div>
+      <div class="trust-text"><strong>99.4% uptime SLA</strong><span>Enterprise-grade reliability and support</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section style="padding:64px 40px;border-top:1px solid var(--b);">
+  <div class="cta-box fi">
+    <div class="cta-glow"></div>
+    <h2 class="cta-title">Ready to deploy your first agent?</h2>
+    <p class="cta-sub">Start with a 14-day free trial. No credit card required. Full access to all features.</p>
+    <div class="cta-actions">
+      <button class="btn btn-p btn-lg" onclick="location.href='02_browse.html'">Start free trial</button>
+      <button class="btn btn-lg">Talk to sales</button>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="foot-left">&copy; 2026 AgentIQ. All rights reserved.</div>
+  <div class="foot-links">
+    <a href="#">Privacy</a>
+    <a href="#">Terms</a>
+    <a href="#">Security</a>
+    <a href="#">Docs</a>
+    <a href="#">Status</a>
+  </div>
+</footer>
+
+<script>
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('v'); });
+}, {threshold: 0.08});
+document.querySelectorAll('.fi').forEach(el => obs.observe(el));
+</script>
+</body>
+</html>

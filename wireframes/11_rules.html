@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Rules Engine — AgentIQ</title>
+<style>
+:root{--bg:#0D0F12;--s:#161A20;--s2:#1E2329;--s3:#252B33;--b:#2A3040;--b2:#353D4A;--t:#F0F2F5;--t2:#8B95A3;--t3:#545F6E;--ac:#4F8EF7;--acd:#1C2E4A;--gn:#34D399;--gnd:#0D2E22;--am:#FBBF24;--amd:#2D2210;--rd:#F87171;--rdd:#2D1010;--tl:#2DD4BF;--tld:#0D2D2A;--pu:#A78BFA;--pud:#1E1635;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;background:var(--bg);color:var(--t);font-size:14px;line-height:1.6;}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;height:56px;padding:0 40px;display:flex;align-items:center;justify-content:space-between;background:rgba(13,15,18,0.96);border-bottom:1px solid var(--b);}
+.logo{display:flex;align-items:center;gap:9px;text-decoration:none;}
+.logo-mark{width:30px;height:30px;background:var(--ac);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:15px;}
+.logo-text{font-size:15px;font-weight:700;color:var(--t);}
+.logo-text span{color:var(--ac);}
+.nav-links{display:flex;align-items:center;gap:28px;}
+.nav-links a{font-size:13px;color:var(--t2);text-decoration:none;transition:color .15s;}
+.nav-links a:hover,.nav-links a.active{color:var(--t);}
+.nav-right{display:flex;align-items:center;gap:8px;}
+.avatar{width:30px;height:30px;border-radius:50%;background:var(--acd);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--ac);}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;font-family:inherit;font-size:13px;font-weight:500;padding:8px 16px;border-radius:7px;cursor:pointer;border:1px solid var(--b2);background:var(--s2);color:var(--t);transition:all .15s;text-decoration:none;}
+.btn:hover{background:var(--s3);}
+.btn-p{background:var(--ac);border-color:var(--ac);color:#fff;}
+.btn-p:hover{background:#6b9ff8;}
+.btn-sm{font-size:12px;padding:6px 12px;}
+.btn-danger{background:var(--rdd);border-color:var(--rd);color:var(--rd);}
+.btn-danger:hover{background:#3d1515;}
+.tag{display:inline-flex;align-items:center;font-size:11px;font-weight:500;padding:3px 9px;border-radius:20px;}
+.tg{background:var(--gnd);color:var(--gn);}
+.tam{background:var(--amd);color:var(--am);}
+.tr{background:var(--rdd);color:var(--rd);}
+.tb{background:var(--acd);color:var(--ac);}
+.tt{background:var(--tld);color:var(--tl);}
+.tp{background:var(--pud);color:var(--pu);}
+.tgr{background:var(--s3);color:var(--t2);}
+input,select,textarea{font-family:inherit;font-size:13px;color:var(--t);background:var(--s2);border:1px solid var(--b2);border-radius:7px;padding:8px 12px;width:100%;outline:none;transition:border-color .15s;}
+input:focus,select:focus,textarea:focus{border-color:var(--ac);}
+input::placeholder,textarea::placeholder{color:var(--t3);}
+select option{background:var(--s2);}
+label{font-size:12px;color:var(--t2);display:block;margin-bottom:5px;}
+textarea{resize:vertical;}
+/* LAYOUT */
+.shell{display:flex;padding-top:56px;min-height:100vh;}
+.sidebar{width:220px;flex-shrink:0;background:var(--s);border-right:1px solid var(--b);padding:20px 14px;position:sticky;top:56px;height:calc(100vh - 56px);overflow-y:auto;}
+.sidebar-label{font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;padding:0 8px;}
+.sidebar-section{margin-bottom:24px;}
+.sl{display:flex;align-items:center;gap:9px;font-size:13px;padding:8px 10px;border-radius:7px;color:var(--t2);cursor:pointer;margin-bottom:2px;text-decoration:none;transition:all .15s;}
+.sl:hover{background:var(--s2);color:var(--t);}
+.sl.active{background:var(--s2);color:var(--t);font-weight:500;}
+.sl .ico{font-size:15px;width:20px;text-align:center;}
+.sl .badge{margin-left:auto;background:var(--am);color:#000;font-size:10px;font-weight:700;padding:1px 6px;border-radius:20px;}
+.main{flex:1;min-width:0;padding:0;}
+/* TOOLBAR */
+.toolbar{background:var(--s);border-bottom:1px solid var(--b);padding:14px 32px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+/* CATEGORY TABS */
+.cat-tabs{display:flex;gap:0;border-bottom:1px solid var(--b);padding:0 32px;background:var(--s);}
+.cat-tab{padding:11px 18px;font-size:13px;font-weight:500;color:var(--t2);cursor:pointer;border:none;border-bottom:2px solid transparent;background:none;font-family:inherit;transition:all .15s;display:flex;align-items:center;gap:7px;}
+.cat-tab:hover{color:var(--t);}
+.cat-tab.active{color:var(--ac);border-bottom-color:var(--ac);}
+.cat-count{font-size:11px;background:var(--s2);border-radius:20px;padding:1px 7px;font-weight:600;}
+/* RULES LIST */
+.rules-body{padding:24px 32px;}
+/* RULE CARD */
+.rule-card{background:var(--s);border:1px solid var(--b);border-radius:11px;padding:18px;margin-bottom:12px;transition:border-color .2s;position:relative;}
+.rule-card:hover{border-color:var(--b2);}
+.rule-card.disabled{opacity:.5;}
+.rule-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;gap:12px;}
+.rule-left{display:flex;align-items:flex-start;gap:12px;flex:1;}
+.rule-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
+.rule-title{font-size:14px;font-weight:600;color:var(--t);margin-bottom:3px;}
+.rule-text{font-size:13px;color:var(--t2);line-height:1.7;margin-bottom:10px;padding:11px 14px;background:var(--s2);border-radius:8px;border-left:3px solid var(--b2);}
+.rule-text.auto-approve{border-left-color:var(--gn);}
+.rule-text.flag-review{border-left-color:var(--am);}
+.rule-text.fraud-flag{border-left-color:var(--rd);}
+.rule-text.auto-deny{border-left-color:var(--rd);}
+.rule-text.escalate{border-left-color:var(--pu);}
+.rule-footer{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.rule-actions{display:flex;gap:7px;align-items:center;margin-left:auto;}
+.rule-meta{font-size:11px;color:var(--t3);}
+/* TOGGLE SWITCH */
+.toggle{width:38px;height:20px;border-radius:20px;background:var(--s3);border:1px solid var(--b2);cursor:pointer;position:relative;flex-shrink:0;transition:background .2s;}
+.toggle.on{background:var(--gn);border-color:var(--gn);}
+.toggle::after{content:'';position:absolute;width:14px;height:14px;border-radius:50%;background:#fff;top:2px;left:2px;transition:transform .2s;}
+.toggle.on::after{transform:translateX(18px);}
+/* RULE STATS */
+.rule-stat{background:var(--s2);border-radius:7px;padding:7px 12px;font-size:12px;display:flex;gap:6px;align-items:center;}
+.rule-stat-val{font-weight:600;color:var(--t);}
+.rule-stat-label{color:var(--t3);}
+/* ADD RULE FORM */
+.add-rule-form{background:var(--s);border:2px solid var(--ac);border-radius:11px;padding:20px;margin-bottom:12px;display:none;}
+.add-rule-form.open{display:block;}
+/* IMPACT BANNER */
+.impact-banner{background:var(--amd);border:1px solid var(--am);border-radius:8px;padding:12px 16px;margin-bottom:12px;font-size:12px;color:var(--t2);display:none;}
+.impact-banner.show{display:block;}
+/* EMPTY CATEGORY */
+.empty-cat{text-align:center;padding:48px;color:var(--t3);}
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:500;align-items:center;justify-content:center;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--s);border:1px solid var(--b2);border-radius:14px;padding:24px;width:100%;max-width:520px;}
+.modal-title{font-size:16px;font-weight:600;color:var(--t);margin-bottom:6px;}
+.modal-sub{font-size:13px;color:var(--t2);margin-bottom:18px;}
+.fg{margin-bottom:14px;}
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="logo" href="01_homepage.html"><div class="logo-mark">🤖</div><span class="logo-text">Agent<span>IQ</span></span></a>
+  <div class="nav-links">
+    <a href="05_dashboard.html">Dashboard</a>
+    <a href="08_queue.html">Review Queue</a>
+    <a href="10_logs.html">Run Logs</a>
+    <a href="11_rules.html" class="active">Rules</a>
+    <a href="12_supervisor.html">Supervisor</a>
+  </div>
+  <div class="nav-right"><div class="avatar">SK</div></div>
+</nav>
+
+<div class="shell">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-label">Claims Agent</div>
+      <a class="sl" href="05_dashboard.html"><span class="ico">🏠</span> Dashboard</a>
+      <a class="sl" href="08_queue.html"><span class="ico">📋</span> Review queue <span class="badge">7</span></a>
+      <a class="sl" href="09_review.html"><span class="ico">🔍</span> Claim review</a>
+      <a class="sl" href="10_logs.html"><span class="ico">🧾</span> Run logs</a>
+      <a class="sl active" href="11_rules.html"><span class="ico">⚙️</span> Rules engine</a>
+      <a class="sl" href="12_supervisor.html"><span class="ico">📊</span> Supervisor view</a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">Rule categories</div>
+      <a class="sl" href="#" onclick="showCat('all')"><span class="ico">📋</span> All rules <span class="badge" style="background:var(--s3);color:var(--t2);">9</span></a>
+      <a class="sl" href="#" onclick="showCat('approve')"><span class="ico">✅</span> Auto-approve</a>
+      <a class="sl" href="#" onclick="showCat('review')"><span class="ico">👤</span> Flag for review</a>
+      <a class="sl" href="#" onclick="showCat('fraud')"><span class="ico">🛡️</span> Fraud flags</a>
+      <a class="sl" href="#" onclick="showCat('deny')"><span class="ico">❌</span> Denial rules</a>
+      <a class="sl" href="#" onclick="showCat('escalate')"><span class="ico">🔺</span> Escalation</a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">Rule history</div>
+      <a class="sl"><span class="ico">🕐</span> Change log</a>
+      <a class="sl"><span class="ico">📥</span> Import rules</a>
+      <a class="sl"><span class="ico">📤</span> Export rules</a>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- TOOLBAR -->
+    <div class="toolbar">
+      <div style="flex:1;">
+        <div style="font-size:17px;font-weight:700;color:var(--t);">Rules engine</div>
+        <div style="font-size:12px;color:var(--t2);">Claims Processing Agent &nbsp;&bull;&nbsp; 9 active rules &nbsp;&bull;&nbsp; Last updated Apr 15, 2026</div>
+      </div>
+      <input type="text" placeholder="Search rules..." style="width:220px;" oninput="searchRules(this.value)"/>
+      <button class="btn btn-sm">📥 Import</button>
+      <button class="btn btn-sm">📤 Export</button>
+      <button class="btn btn-sm btn-p" onclick="openAddModal()">+ Add rule</button>
+    </div>
+
+    <!-- INFO BANNER -->
+    <div style="background:var(--acd);border-bottom:1px solid rgba(79,142,247,.2);padding:11px 32px;font-size:12px;color:var(--t2);">
+      <strong style="color:var(--t);">ℹ️ How rules work:</strong> Rules are written in plain English and applied by the agent during the QA step. Rules are evaluated in order — the first matching rule wins. Adjusters and supervisors can add, edit or disable rules. All changes are logged.
+    </div>
+
+    <!-- CATEGORY TABS -->
+    <div class="cat-tabs">
+      <button class="cat-tab active" onclick="showCat('all',this)">All rules <span class="cat-count">9</span></button>
+      <button class="cat-tab" onclick="showCat('approve',this)">Auto-approve <span class="cat-count" style="background:var(--gnd);color:var(--gn);">3</span></button>
+      <button class="cat-tab" onclick="showCat('review',this)">Flag for review <span class="cat-count" style="background:var(--amd);color:var(--am);">3</span></button>
+      <button class="cat-tab" onclick="showCat('fraud',this)">Fraud flags <span class="cat-count" style="background:var(--rdd);color:var(--rd);">2</span></button>
+      <button class="cat-tab" onclick="showCat('deny',this)">Denial <span class="cat-count" style="background:var(--rdd);color:var(--rd);">1</span></button>
+    </div>
+
+    <div class="rules-body">
+
+      <!-- IMPACT BANNER -->
+      <div class="impact-banner" id="impact-banner">
+        ⚠️ <strong style="color:var(--am);">Rule updated.</strong> This change will take effect on the next agent run. Based on last month's data, this rule would have affected approximately <strong style="color:var(--t);">124 claims</strong>.
+      </div>
+
+      <!-- ── AUTO-APPROVE RULES ── -->
+      <div id="cat-approve">
+        <div style="font-size:12px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:12px;display:flex;align-items:center;gap:8px;">
+          <span style="width:8px;height:8px;border-radius:50%;background:var(--gn);display:inline-block;"></span>Auto-approve rules
+        </div>
+
+        <div class="rule-card" data-cat="approve" data-id="R001">
+          <div class="rule-header">
+            <div class="rule-left">
+              <div class="rule-icon" style="background:var(--gnd);">✅</div>
+              <div>
+                <div class="rule-title">Auto-approve low-value standard claims</div>
+                <div style="display:flex;gap:6px;margin-top:4px;flex-wrap:wrap;"><span class="tag tgr">Amount</span><span class="tag tgr">Member tenure</span><span class="tag tgr">Standard procedure</span></div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
+              <div class="toggle on" onclick="toggleRule(this,'R001')"></div>
+              <span class="tag tg">Active</span>
+            </div>
+          </div>
+          <div class="rule-text auto-approve">If the total billed amount is under $500 AND the member has been continuously active for more than 12 months AND the procedure code is on the standard covered procedures list, auto-approve at the full billed amount without routing to human review.</div>
+          <div class="rule-footer">
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <div class="rule-stat"><span class="rule-stat-val">412</span><span class="rule-stat-label">claims matched last month</span></div>
+              <div class="rule-stat"><span class="rule-stat-val">$98.4k</span><span class="rule-stat-label">approved automatically</span></div>
+            </div>
+            <div class="rule-actions">
+              <span class="rule-meta">Added by Sarah K. &nbsp;&bull;&nbsp; Mar 12, 2026</span>
+              <button class="btn btn-sm" onclick="editRule('R001')">Edit</button>
+              <button class="btn btn-sm btn-danger" onclick="deleteRule('R001')">Delete</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="rule-card" data-cat="approve" data-id="R002">
+          <div class="rule-header">
+            <div class="rule-left">
+              <div class="rule-icon" style="background:var(--gnd);">✅</div>
+              <div>
+                <div class="rule-title">Auto-approve preventive care at 100%</div>
+                <div style="display:flex;gap:6px;margin-top:4px;flex-wrap:wrap;"><span class="tag tgr">Preventive care</span><span class="tag tgr">Full coverage</span></div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
+              <div class="toggle on" onclick="toggleRule(this,'R002')"></div>
+              <span class="tag tg">Active</span>
+            </div>
+          </div>
+          <div class="rule-text auto-approve">If the procedure is classified as preventive care (annual physical CPT 99395-99397, standard immunizations CPT 90460-90461, mammogram CPT 77067, colonoscopy CPT 45378) AND the member's plan includes 100% preventive coverage with no co-pay, auto-approve at the full billed amount regardless of dollar value.</div>
+          <div class="rule-footer">
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <div class="rule-stat"><span class="rule-stat-val">218</span><span class="rule-stat-label">claims matched last month</span></div>
+              <div class="rule-stat"><span class="rule-stat-val">$62.1k</span><span class="rule-stat-label">approved automatically</span></div>
+            </div>
+            <div class="rule-actions">
+              <span class="rule-meta">Added by Admin &nbsp;&bull;&nbsp; Jan 10, 2026</span>
+              <button class="btn btn-sm" onclick="editRule('R002')">Edit</button>
+              <button class="btn btn-sm btn-danger">Delete</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="rule-card" data-cat="approve" data-id="R003">
+          <div class="rule-header">
+            <div class="rule-left">
+              <div class="rule-icon" style="background:var(--gnd);">✅</div>
+              <div>
+                <div class="rule-title">Auto-approve repeat prescriptions under $200</div>
+                <div style="display:flex;gap:6px;margin-top:4px;flex-wrap:wrap;"><span class="tag tgr">Prescription</span><span class="tag tgr">Repeat claim</span></div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
+              <div class="toggle on" onclick="toggleRule(this,'R003')"></div>
+              <span class="tag tg">Active</span>
+            </div>
+          </div>
+          <div class="rule-text auto-approve">If the claim is for a prescription drug refill (same NDC code as a claim approved in the past 90 days for the same member) AND the billed amount is under $200, auto-approve at the full billed amount with no human review required.</div>
+          <div class="rule-footer">
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <div class="rule-stat"><span class="rule-stat-val">155</span><span class="rule-stat-label">claims matched last month</span></div>
+            </div>
+            <div class="rule-actions">
+              <span class="rule-meta">Added by Marcus T. &nbsp;&bull;&nbsp; Feb 8, 2026</span>
+              <button class="btn btn-sm" onclick="editRule('R003')">Edit</button>
+              <button class="btn btn-sm btn-danger">Delete</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── FLAG FOR REVIEW RULES ── -->
+      <div id="cat-review" style="margin-top:24px;">
+        <div style="font-size:12px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:12px;display:flex;align-items:center;gap:8px;">
+          <span style="width:8px;height:8px;border-radius:50%;background:var(--am);display:inline-block;"></span>Flag for human review
+        </div>
+
+        <div class="rule-card" data-cat="review" data-id="R004">
+          <div class="rule-header">
+            <div class="rule-left">
+              <div class="rule-icon" style="background:var(--amd);">👤</div>
+              <div>
+                <div class="rule-title">Mandatory review for high-value claims</div>
+                <div style="display:flex;gap:6px;margin-top:4px;"><span class="tag tgr">Amount threshold</span><span class="tag tam">Mandatory</span></div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
+              <div class="toggle on" onclick="toggleRule(this,'R004')"></div>
+              <span class="tag tg">Active</span>
+            </div>
+          </div>
+          <div class="rule-text flag-review">Always route to human review if the total billed amount exceeds $2,000, regardless of confidence score or any other rule. This is a mandatory threshold rule and cannot be overridden by auto-approve rules.</div>
+          <div class="rule-footer">
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <div class="rule-stat"><span class="rule-stat-val">284</span><span class="rule-stat-label">claims triggered last month</span></div>
+              <div class="rule-stat"><span class="rule-stat-val">$1.8M</span><span class="rule-stat-label">total value reviewed</span></div>
+            </div>
+            <div class="rule-actions">
+              <span class="rule-meta">Added by Admin &nbsp;&bull;&nbsp; Jan 10, 2026</span>
+              <button class="btn btn-sm" onclick="editRule('R004')">Edit</button>
+              <button class="btn btn-sm btn-danger">Delete</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="rule-card" data-cat="review" data-id="R005">
+          <div class="rule-header">
+            <div class="rule-left">
+              <div class="rule-icon" style="background:var(--amd);">👤</div>
+              <div>
+                <div class="rule-title">Review when confidence score is below threshold</div>
+                <div style="display:flex;gap:6px;margin-top:4px;"><span class="tag tgr">Confidence score</span><span class="tag tgr">Escalation</span></div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
+              <div class="toggle on" onclick="toggleRule(this,'R005')"></div>
+              <span class="tag tg">Active</span>
+            </div>
+          </div>
+          <div class="rule-text flag-review">If the agent's QA confidence score is below 85%, route to the assigned claims adjuster for review. If the confidence score is below 60%, bypass the adjuster queue entirely and escalate directly to a supervisor.</div>
+          <div class="rule-footer">
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <div class="rule-stat"><span class="rule-stat-val">98</span><span class="rule-stat-label">claims triggered last month</span></div>
+              <div class="rule-stat"><span class="rule-stat-val">12</span><span class="rule-stat-label">escalated to supervisor</span></div>
+            </div>
+            <div class="rule-actions">
+              <span class="rule-meta">Added by Sarah K. &nbsp;&bull;&nbsp; Feb 22, 2026</span>
+              <button class="btn btn-sm" onclick="editRule('R005')">Edit</button>
+              <button class="btn btn-sm btn-danger">Delete</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="rule-card" data-cat="review" data-id="R006">
+          <div class="rule-header">
+            <div class="rule-left">
+              <div class="rule-icon" style="background:var(--amd);">👤</div>
+              <div>
+                <div class="rule-title">Review out-of-network surgical claims</div>
+                <div style="display:flex;gap:6px;margin-top:4px;"><span class="tag tgr">Network status</span><span class="tag tgr">Surgical</span></div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
+              <div class="toggle on" onclick="toggleRule(this,'R006')"></div>
+              <span class="tag tg">Active</span>
+            </div>
+          </div>
+          <div class="rule-text flag-review">If the provider is out-of-network AND the claim is for a surgical procedure (CPT range 10000-69999) AND the billed amount exceeds $5,000, always route to a human reviewer regardless of confidence score. The reviewer should verify whether the member had a valid medical reason for using an out-of-network provider.</div>
+          <div class="rule-footer">
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <div class="rule-stat"><span class="rule-stat-val">16</span><span class="rule-stat-label">claims triggered last month</span></div>
+            </div>
+            <div class="rule-actions">
+              <span class="rule-meta">Added by Marcus T. &nbsp;&bull;&nbsp; Mar 5, 2026</span>
+              <button class="btn btn-sm" onclick="editRule('R006')">Edit</button>
+              <button class="btn btn-sm btn-danger">Delete</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── FRAUD FLAG RULES ── -->
+      <div id="cat-fraud" style="margin-top:24px;">
+        <div style="font-size:12px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:12px;display:flex;align-items:center;gap:8px;">
+          <span style="width:8px;height:8px;border-radius:50%;background:var(--rd);display:inline-block;"></span>Fraud flag rules
+        </div>
+
+        <div class="rule-card" data-cat="fraud" data-id="R007">
+          <div class="rule-header">
+            <div class="rule-left">
+              <div class="rule-icon" style="background:var(--rdd);">🛡️</div>
+              <div>
+                <div class="rule-title">Flag provider upcoding patterns</div>
+                <div style="display:flex;gap:6px;margin-top:4px;"><span class="tag tgr">Provider pattern</span><span class="tag tr">Fraud</span><span class="tag tp">Supervisor</span></div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
+              <div class="toggle on" onclick="toggleRule(this,'R007')"></div>
+              <span class="tag tg">Active</span>
+            </div>
+          </div>
+          <div class="rule-text fraud-flag">If the same ICD-CPT procedure combination has been billed by the same provider (NPI) more than 3 times in any 30-day window across different members, flag all new claims from that provider as potential upcoding fraud and route immediately to a supervisor for investigation. Do not auto-approve any claims from this provider until the supervisor clears the flag.</div>
+          <div class="rule-footer">
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <div class="rule-stat"><span class="rule-stat-val">2</span><span class="rule-stat-label">providers flagged this month</span></div>
+            </div>
+            <div class="rule-actions">
+              <span class="rule-meta">Added by Admin &nbsp;&bull;&nbsp; Jan 10, 2026</span>
+              <button class="btn btn-sm" onclick="editRule('R007')">Edit</button>
+              <button class="btn btn-sm btn-danger">Delete</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="rule-card" data-cat="fraud" data-id="R008">
+          <div class="rule-header">
+            <div class="rule-left">
+              <div class="rule-icon" style="background:var(--rdd);">🛡️</div>
+              <div>
+                <div class="rule-title">Flag high-frequency member claim patterns</div>
+                <div style="display:flex;gap:6px;margin-top:4px;"><span class="tag tgr">Member frequency</span><span class="tag tr">Fraud</span></div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
+              <div class="toggle on" onclick="toggleRule(this,'R008')"></div>
+              <span class="tag tg">Active</span>
+            </div>
+          </div>
+          <div class="rule-text fraud-flag">If a single member submits more than 4 claims within any 30-day period, flag all subsequent claims from that member for mandatory human review until a supervisor reviews the member's full claim history and clears the flag. This rule applies regardless of claim amount or procedure type.</div>
+          <div class="rule-footer">
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <div class="rule-stat"><span class="rule-stat-val">3</span><span class="rule-stat-label">members flagged this month</span></div>
+            </div>
+            <div class="rule-actions">
+              <span class="rule-meta">Added by Sarah K. &nbsp;&bull;&nbsp; Mar 20, 2026</span>
+              <button class="btn btn-sm" onclick="editRule('R008')">Edit</button>
+              <button class="btn btn-sm btn-danger">Delete</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── DENIAL RULES ── -->
+      <div id="cat-deny" style="margin-top:24px;">
+        <div style="font-size:12px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:12px;display:flex;align-items:center;gap:8px;">
+          <span style="width:8px;height:8px;border-radius:50%;background:var(--rd);display:inline-block;"></span>Denial rules
+        </div>
+
+        <div class="rule-card" data-cat="deny" data-id="R009">
+          <div class="rule-header">
+            <div class="rule-left">
+              <div class="rule-icon" style="background:var(--rdd);">❌</div>
+              <div>
+                <div class="rule-title">Recommend denial for missing pre-authorization</div>
+                <div style="display:flex;gap:6px;margin-top:4px;"><span class="tag tgr">Pre-auth</span><span class="tag tr">Denial</span><span class="tag tam">Human confirms</span></div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;">
+              <div class="toggle on" onclick="toggleRule(this,'R009')"></div>
+              <span class="tag tg">Active</span>
+            </div>
+          </div>
+          <div class="rule-text auto-deny">If the procedure requires pre-authorization per the plan's benefit schedule AND no valid pre-authorization record is found in the system for this member, provider and procedure date AND the billed amount exceeds $1,000, recommend denial with the reason "Pre-authorization required but not on file." Always route to a human reviewer before finalizing the denial to allow for appeal or retroactive authorization.</div>
+          <div class="rule-footer">
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <div class="rule-stat"><span class="rule-stat-val">23</span><span class="rule-stat-label">denials recommended last month</span></div>
+              <div class="rule-stat"><span class="rule-stat-val">18</span><span class="rule-stat-label">confirmed by adjuster</span></div>
+              <div class="rule-stat"><span class="rule-stat-val">5</span><span class="rule-stat-label">overridden after appeal</span></div>
+            </div>
+            <div class="rule-actions">
+              <span class="rule-meta">Added by Admin &nbsp;&bull;&nbsp; Jan 10, 2026</span>
+              <button class="btn btn-sm" onclick="editRule('R009')">Edit</button>
+              <button class="btn btn-sm btn-danger">Delete</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- end rules-body -->
+  </div>
+</div>
+
+<!-- ADD/EDIT RULE MODAL -->
+<div class="modal-overlay" id="rule-modal">
+  <div class="modal">
+    <div class="modal-title" id="modal-title">Add new rule</div>
+    <div class="modal-sub">Write your rule in plain English. The agent will interpret and apply it during the QA step of every claim.</div>
+    <div class="fg">
+      <label>Rule type</label>
+      <select id="rule-type" onchange="updateModalColor()">
+        <option value="approve">Auto-approve</option>
+        <option value="review" selected>Flag for human review</option>
+        <option value="fraud">Fraud flag</option>
+        <option value="deny">Recommend denial</option>
+        <option value="escalate">Escalate to supervisor</option>
+      </select>
+    </div>
+    <div class="fg">
+      <label>Rule title</label>
+      <input type="text" id="rule-title-input" placeholder="Short descriptive title e.g. Review mental health claims over $1,000"/>
+    </div>
+    <div class="fg">
+      <label>Rule description <span style="color:var(--t3);">— write in plain English</span></label>
+      <textarea rows="6" id="rule-text-input" placeholder="Describe the rule clearly. Include all conditions. Example: If the claim is for a mental health procedure (CPT range 90785-90899) and the billed amount exceeds $1,000, route to human review regardless of confidence score..."></textarea>
+    </div>
+    <div class="fg">
+      <label>Tags <span style="color:var(--t3);">— comma separated, for search</span></label>
+      <input type="text" id="rule-tags-input" placeholder="e.g. mental health, amount threshold, CPT range"/>
+    </div>
+    <div style="background:var(--s2);border-radius:8px;padding:11px;margin-bottom:16px;font-size:12px;color:var(--t2);">
+      <strong style="color:var(--t);">💡 Tip:</strong> Be specific about conditions, thresholds and actions. Good rules reference specific CPT ranges, dollar thresholds, time windows and clear outcomes. Vague rules may produce inconsistent results.
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-p" onclick="saveRule()">Save rule</button>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE CONFIRM MODAL -->
+<div class="modal-overlay" id="delete-modal">
+  <div class="modal">
+    <div class="modal-title" style="color:var(--rd);">Delete rule?</div>
+    <div class="modal-sub">This rule will be permanently removed and will no longer apply to new claims. This action cannot be undone.</div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button class="btn" onclick="document.getElementById('delete-modal').classList.remove('open')">Cancel</button>
+      <button class="btn btn-danger" onclick="confirmDelete()">Delete rule</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let deleteTarget = null;
+
+function showCat(cat, el) {
+  if (el) {
+    document.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+  }
+  const sections = ['cat-approve','cat-review','cat-fraud','cat-deny'];
+  sections.forEach(s => {
+    const el2 = document.getElementById(s);
+    if (el2) el2.style.display = (cat === 'all' || s === 'cat-' + cat) ? '' : 'none';
+  });
+}
+
+function searchRules(val) {
+  document.querySelectorAll('.rule-card').forEach(card => {
+    card.style.display = card.textContent.toLowerCase().includes(val.toLowerCase()) ? '' : 'none';
+  });
+}
+
+function toggleRule(el, id) {
+  el.classList.toggle('on');
+  const card = el.closest('.rule-card');
+  const tag = card.querySelector('.tag.tg, .tag.tr');
+  const isOn = el.classList.contains('on');
+  if (isOn) {
+    card.classList.remove('disabled');
+    if (tag) { tag.className = 'tag tg'; tag.textContent = 'Active'; }
+  } else {
+    card.classList.add('disabled');
+    if (tag) { tag.className = 'tag tgr'; tag.textContent = 'Disabled'; }
+  }
+  document.getElementById('impact-banner').classList.add('show');
+  setTimeout(() => document.getElementById('impact-banner').classList.remove('show'), 4000);
+}
+
+function editRule(id) {
+  document.getElementById('modal-title').textContent = 'Edit rule ' + id;
+  document.getElementById('rule-modal').classList.add('open');
+}
+
+function deleteRule(id) {
+  deleteTarget = id;
+  document.getElementById('delete-modal').classList.add('open');
+}
+
+function confirmDelete() {
+  document.getElementById('delete-modal').classList.remove('open');
+  if (deleteTarget) {
+    const card = document.querySelector(`[data-id="${deleteTarget}"]`);
+    if (card) card.remove();
+  }
+}
+
+function openAddModal() {
+  document.getElementById('modal-title').textContent = 'Add new rule';
+  document.getElementById('rule-title-input').value = '';
+  document.getElementById('rule-text-input').value = '';
+  document.getElementById('rule-tags-input').value = '';
+  document.getElementById('rule-modal').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('rule-modal').classList.remove('open');
+}
+
+function saveRule() {
+  closeModal();
+  document.getElementById('impact-banner').classList.add('show');
+  setTimeout(() => document.getElementById('impact-banner').classList.remove('show'), 5000);
+}
+
+function updateModalColor() {
+  // Could update UI based on rule type selection
+}
+</script>
+</body>
+</html>

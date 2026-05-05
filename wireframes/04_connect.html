@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Connect Workspace — AgentIQ</title>
+<style>
+:root{--bg:#0D0F12;--s:#161A20;--s2:#1E2329;--s3:#252B33;--b:#2A3040;--b2:#353D4A;--t:#F0F2F5;--t2:#8B95A3;--t3:#545F6E;--ac:#4F8EF7;--acd:#1C2E4A;--gn:#34D399;--gnd:#0D2E22;--am:#FBBF24;--amd:#2D2210;--rd:#F87171;--rdd:#2D1010;--tl:#2DD4BF;--tld:#0D2D2A;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;background:var(--bg);color:var(--t);font-size:14px;line-height:1.6;}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;height:56px;padding:0 40px;display:flex;align-items:center;justify-content:space-between;background:rgba(13,15,18,0.96);border-bottom:1px solid var(--b);}
+.logo{display:flex;align-items:center;gap:9px;text-decoration:none;}
+.logo-mark{width:30px;height:30px;background:var(--ac);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:15px;}
+.logo-text{font-size:15px;font-weight:700;color:var(--t);}
+.logo-text span{color:var(--ac);}
+.nav-links{display:flex;align-items:center;gap:28px;}
+.nav-links a{font-size:13px;color:var(--t2);text-decoration:none;transition:color .15s;}
+.nav-links a:hover{color:var(--t);}
+.nav-right{display:flex;align-items:center;gap:8px;}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;font-family:inherit;font-size:13px;font-weight:500;padding:8px 16px;border-radius:7px;cursor:pointer;border:1px solid var(--b2);background:var(--s2);color:var(--t);transition:all .15s;text-decoration:none;}
+.btn:hover{background:var(--s3);}
+.btn-p{background:var(--ac);border-color:var(--ac);color:#fff;}
+.btn-p:hover{background:#6b9ff8;}
+.btn-sm{font-size:12px;padding:6px 12px;}
+.btn-success{background:var(--gnd);border-color:var(--gn);color:var(--gn);}
+.btn-success:hover{background:#0f3a28;}
+.tag{display:inline-flex;align-items:center;font-size:11px;font-weight:500;padding:3px 9px;border-radius:20px;}
+.tg{background:var(--gnd);color:var(--gn);}
+.tam{background:var(--amd);color:var(--am);}
+.tgr{background:var(--s3);color:var(--t2);}
+.card{background:var(--s);border:1px solid var(--b);border-radius:10px;padding:20px;}
+input,select,textarea{font-family:inherit;font-size:13px;color:var(--t);background:var(--s2);border:1px solid var(--b2);border-radius:7px;padding:8px 12px;width:100%;outline:none;transition:border-color .15s;}
+input:focus,select:focus,textarea:focus{border-color:var(--ac);}
+input::placeholder,textarea::placeholder{color:var(--t3);}
+select option{background:var(--s2);}
+label{font-size:12px;color:var(--t2);display:block;margin-bottom:5px;}
+.fg{margin-bottom:14px;}
+.divider{height:1px;background:var(--b);margin:20px 0;}
+/* STEPPER */
+.stepper{display:flex;align-items:center;gap:0;margin-bottom:36px;}
+.step-item{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:500;}
+.step-item.done{color:var(--gn);}
+.step-item.active{color:var(--ac);}
+.step-item.pending{color:var(--t3);}
+.step-circle{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;border:1px solid currentColor;}
+.step-item.done .step-circle{background:var(--gnd);}
+.step-item.active .step-circle{background:var(--acd);}
+.step-item.pending .step-circle{background:var(--s2);}
+.step-line{flex:1;height:1px;margin:0 10px;min-width:40px;}
+.step-line.done{background:var(--gn);}
+.step-line.pending{background:var(--b2);}
+/* INTEGRATION ROW */
+.int-row{background:var(--s2);border:1px solid var(--b2);border-radius:9px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;transition:border-color .2s;}
+.int-row.connected{border-color:var(--gn);}
+.int-left{display:flex;align-items:center;gap:12px;}
+.int-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.int-name{font-size:13px;font-weight:500;color:var(--t);}
+.int-desc{font-size:11px;color:var(--t3);margin-top:2px;}
+/* SECTION HEADER */
+.sec-hd{font-size:15px;font-weight:600;color:var(--t);margin-bottom:6px;}
+.sec-sub{font-size:12px;color:var(--t2);margin-bottom:16px;}
+/* THRESHOLD ROW */
+.thresh-row{background:var(--s2);border:1px solid var(--b2);border-radius:9px;padding:14px 16px;margin-bottom:10px;}
+.thresh-label{font-size:13px;font-weight:500;color:var(--t);margin-bottom:3px;}
+.thresh-desc{font-size:11px;color:var(--t3);}
+/* NOTIFICATION TOGGLE */
+.notif-row{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--b);}
+.notif-row:last-child{border-bottom:none;}
+.notif-text{flex:1;}
+.notif-title{font-size:13px;font-weight:500;color:var(--t);}
+.notif-desc{font-size:12px;color:var(--t3);margin-top:2px;}
+.toggle{width:36px;height:20px;border-radius:20px;background:var(--s3);border:1px solid var(--b2);cursor:pointer;position:relative;flex-shrink:0;transition:background .2s;}
+.toggle.on{background:var(--ac);border-color:var(--ac);}
+.toggle::after{content:'';position:absolute;width:14px;height:14px;border-radius:50%;background:#fff;top:2px;left:2px;transition:transform .2s;}
+.toggle.on::after{transform:translateX(16px);}
+/* SUMMARY BOX */
+.summary-box{background:var(--gnd);border:1px solid var(--gn);border-radius:10px;padding:16px;}
+.summary-title{font-size:13px;font-weight:600;color:var(--gn);margin-bottom:10px;}
+.summary-row{display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px;}
+.summary-key{color:var(--t3);}
+.summary-val{color:var(--t);font-weight:500;}
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="logo" href="01_homepage.html"><div class="logo-mark">🤖</div><span class="logo-text">Agent<span>IQ</span></span></a>
+  <div class="nav-links">
+    <a href="01_homepage.html">Home</a>
+    <a href="02_browse.html">Browse Agents</a>
+    <a href="05_dashboard.html">My Agents</a>
+  </div>
+  <div class="nav-right">
+    <button class="btn btn-sm">Sign in</button>
+    <button class="btn btn-sm btn-p">Get started</button>
+  </div>
+</nav>
+
+<div style="padding-top:56px;">
+  <div style="max-width:760px;margin:0 auto;padding:36px 24px;">
+
+    <!-- PAGE TITLE -->
+    <div style="margin-bottom:32px;">
+      <div style="font-size:12px;color:var(--t3);margin-bottom:10px;">
+        <a href="02_browse.html" style="color:var(--ac);text-decoration:none;">Browse</a> /
+        <a href="03_agent_detail.html" style="color:var(--ac);text-decoration:none;">Claims Processing Agent</a> /
+        Connect workspace
+      </div>
+      <h1 style="font-size:22px;font-weight:700;color:var(--t);margin-bottom:6px;">Connect your workspace</h1>
+      <p style="font-size:13px;color:var(--t2);">Set up the Claims Processing Agent for your organization. Takes about 5 minutes.</p>
+    </div>
+
+    <!-- STEPPER -->
+    <div class="stepper">
+      <div class="step-item done"><div class="step-circle">✓</div><span>Select plan</span></div>
+      <div class="step-line done"></div>
+      <div class="step-item active"><div class="step-circle">2</div><span>Connect systems</span></div>
+      <div class="step-line pending"></div>
+      <div class="step-item pending"><div class="step-circle">3</div><span>Configure rules</span></div>
+      <div class="step-line pending"></div>
+      <div class="step-item pending"><div class="step-circle">4</div><span>Go live</span></div>
+    </div>
+
+    <!-- STEP 1: ORG DETAILS -->
+    <div class="card" style="margin-bottom:16px;">
+      <div class="sec-hd">Organization details</div>
+      <div class="sec-sub">Basic information about your organization and claims volume.</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        <div class="fg"><label>Organization name</label><input type="text" value="BlueCross Regional Health"/></div>
+        <div class="fg"><label>Admin email</label><input type="text" value="admin@bluecross.org"/></div>
+        <div class="fg"><label>Monthly claims volume</label>
+          <select>
+            <option>1,000 – 5,000 claims/mo</option>
+            <option>Under 1,000</option>
+            <option>5,000 – 20,000</option>
+            <option>20,000+</option>
+          </select>
+        </div>
+        <div class="fg"><label>Primary state / jurisdiction</label>
+          <select>
+            <option>California</option>
+            <option>Texas</option>
+            <option>New York</option>
+            <option>Florida</option>
+            <option>Multi-state</option>
+          </select>
+        </div>
+        <div class="fg"><label>Plan type</label>
+          <select>
+            <option>Group Health — PPO</option>
+            <option>Group Health — HMO</option>
+            <option>Individual / ACA</option>
+            <option>Medicare Advantage</option>
+            <option>Medicaid</option>
+          </select>
+        </div>
+        <div class="fg"><label>Existing claims system</label>
+          <select>
+            <option>Guidewire ClaimCenter</option>
+            <option>Duck Creek Claims</option>
+            <option>TriZetto / Facets</option>
+            <option>Majesco Claims</option>
+            <option>Custom / Other</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 2: CONNECT SYSTEMS -->
+    <div class="card" style="margin-bottom:16px;">
+      <div class="sec-hd">Connect your systems</div>
+      <div class="sec-sub">The agent reads policy and eligibility data from your systems and writes adjudication results back. Required connections are marked.</div>
+
+      <div class="int-row connected">
+        <div class="int-left">
+          <div class="int-icon" style="background:var(--acd);">⚙️</div>
+          <div>
+            <div class="int-name">Guidewire ClaimCenter <span style="font-size:10px;color:var(--t3);">(Required)</span></div>
+            <div class="int-desc">Claims management — reads and writes claim records</div>
+          </div>
+        </div>
+        <button class="btn btn-success btn-sm">✓ Connected</button>
+      </div>
+
+      <div class="int-row connected">
+        <div class="int-left">
+          <div class="int-icon" style="background:var(--gnd);">🏥</div>
+          <div>
+            <div class="int-name">Epic EHR <span style="font-size:10px;color:var(--t3);">(Required)</span></div>
+            <div class="int-desc">Member eligibility and clinical data</div>
+          </div>
+        </div>
+        <button class="btn btn-success btn-sm">✓ Connected</button>
+      </div>
+
+      <div class="int-row" id="doc-row">
+        <div class="int-left">
+          <div class="int-icon" style="background:var(--amd);">📄</div>
+          <div>
+            <div class="int-name">Document inbox <span style="font-size:10px;color:var(--t3);">(Required)</span></div>
+            <div class="int-desc">Email or S3 bucket where claimants submit documents</div>
+          </div>
+        </div>
+        <button class="btn btn-sm" onclick="connectDoc()">Connect</button>
+      </div>
+
+      <div class="int-row">
+        <div class="int-left">
+          <div class="int-icon" style="background:var(--tld);">🔗</div>
+          <div>
+            <div class="int-name">TriZetto / Facets <span style="font-size:10px;color:var(--t3);">(Optional)</span></div>
+            <div class="int-desc">Benefits and policy schedule data</div>
+          </div>
+        </div>
+        <button class="btn btn-sm">Connect</button>
+      </div>
+
+      <div class="int-row">
+        <div class="int-left">
+          <div class="int-icon" style="background:var(--s3);">💬</div>
+          <div>
+            <div class="int-name">Slack <span style="font-size:10px;color:var(--t3);">(Optional)</span></div>
+            <div class="int-desc">Notifications to your claims team channel</div>
+          </div>
+        </div>
+        <button class="btn btn-sm">Connect</button>
+      </div>
+    </div>
+
+    <!-- STEP 3: HUMAN REVIEW THRESHOLDS -->
+    <div class="card" style="margin-bottom:16px;">
+      <div class="sec-hd">Human review thresholds</div>
+      <div class="sec-sub">Define when the agent auto-approves vs. routes to a human. These work alongside the rules you configure in the Rules Engine after setup.</div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;">
+        <div class="fg">
+          <label>Auto-approve below (max amount)</label>
+          <input type="text" value="$500.00" id="auto-thresh"/>
+          <div style="font-size:11px;color:var(--t3);margin-top:4px;">Claims below this amount with confidence ≥ 85% are auto-approved</div>
+        </div>
+        <div class="fg">
+          <label>Mandatory human review above</label>
+          <input type="text" value="$2,000.00"/>
+          <div style="font-size:11px;color:var(--t3);margin-top:4px;">All claims above this amount always go to human review regardless of confidence</div>
+        </div>
+        <div class="fg">
+          <label>Confidence score threshold</label>
+          <select>
+            <option selected>Below 85% → adjuster review</option>
+            <option>Below 75% → adjuster review</option>
+            <option>Below 90% → adjuster review</option>
+          </select>
+          <div style="font-size:11px;color:var(--t3);margin-top:4px;">Below 60% always escalates to supervisor</div>
+        </div>
+        <div class="fg">
+          <label>SLA for human review</label>
+          <select>
+            <option selected>24 hours</option>
+            <option>4 hours</option>
+            <option>8 hours</option>
+            <option>48 hours</option>
+          </select>
+          <div style="font-size:11px;color:var(--t3);margin-top:4px;">Supervisor is notified if SLA is about to breach</div>
+        </div>
+      </div>
+
+      <div style="background:var(--amd);border:1px solid var(--am);border-radius:8px;padding:12px;font-size:12px;color:var(--t2);">
+        <strong style="color:var(--am);">⚠️ Note:</strong> These thresholds are a starting point. You can add more complex rules (fraud flags, procedure-specific escalations, member-history rules) in the <strong style="color:var(--t);">Rules Engine</strong> after setup.
+      </div>
+    </div>
+
+    <!-- STEP 4: REVIEWER SETUP -->
+    <div class="card" style="margin-bottom:16px;">
+      <div class="sec-hd">Reviewer team setup</div>
+      <div class="sec-sub">Add the people who will review and approve claims. You can add more later.</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px;">
+        <div class="fg"><label>Name</label><input type="text" value="Sarah Kim"/></div>
+        <div class="fg"><label>Email</label><input type="text" value="sarah.k@bluecross.org"/></div>
+        <div class="fg"><label>Role</label><select><option selected>Claims Adjuster</option><option>Supervisor</option><option>Admin</option></select></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px;">
+        <div class="fg"><label>Name</label><input type="text" value="Marcus Torres"/></div>
+        <div class="fg"><label>Email</label><input type="text" value="m.torres@bluecross.org"/></div>
+        <div class="fg"><label>Role</label><select><option>Claims Adjuster</option><option selected>Supervisor</option><option>Admin</option></select></div>
+      </div>
+      <button class="btn btn-sm">+ Add another reviewer</button>
+    </div>
+
+    <!-- STEP 5: NOTIFICATIONS -->
+    <div class="card" style="margin-bottom:16px;">
+      <div class="sec-hd">Notification settings</div>
+      <div class="sec-sub">Choose which events trigger notifications and to whom.</div>
+
+      <div class="notif-row">
+        <div class="notif-text">
+          <div class="notif-title">Notify adjuster when a claim is ready for review</div>
+          <div class="notif-desc">Sent to the assigned adjuster via email when a claim reaches human review</div>
+        </div>
+        <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+      </div>
+      <div class="notif-row">
+        <div class="notif-text">
+          <div class="notif-title">Notify claimant when a decision is made</div>
+          <div class="notif-desc">Agent auto-sends decision letter to claimant after human approval</div>
+        </div>
+        <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+      </div>
+      <div class="notif-row">
+        <div class="notif-text">
+          <div class="notif-title">Notify supervisor when SLA is about to breach</div>
+          <div class="notif-desc">Alert sent 4 hours before the review SLA deadline</div>
+        </div>
+        <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+      </div>
+      <div class="notif-row">
+        <div class="notif-text">
+          <div class="notif-title">Notify supervisor when fraud flag is raised</div>
+          <div class="notif-desc">Immediate escalation when the agent detects a fraud pattern</div>
+        </div>
+        <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+      </div>
+      <div class="notif-row">
+        <div class="notif-text">
+          <div class="notif-title">Weekly summary report to admin</div>
+          <div class="notif-desc">Auto-generated summary of claims volume, approvals, denials and confidence trends</div>
+        </div>
+        <div class="toggle" onclick="this.classList.toggle('on')"></div>
+      </div>
+    </div>
+
+    <!-- SUMMARY -->
+    <div class="summary-box" style="margin-bottom:24px;">
+      <div class="summary-title">✓ Setup summary</div>
+      <div class="summary-row"><span class="summary-key">Agent</span><span class="summary-val">Claims Processing Agent — Professional</span></div>
+      <div class="summary-row"><span class="summary-key">Organization</span><span class="summary-val">BlueCross Regional Health</span></div>
+      <div class="summary-row"><span class="summary-key">Plan</span><span class="summary-val">Professional · $199/mo · 14-day free trial</span></div>
+      <div class="summary-row"><span class="summary-key">Claims system</span><span class="summary-val">Guidewire ClaimCenter ✓ · Epic EHR ✓</span></div>
+      <div class="summary-row"><span class="summary-key">Auto-approve below</span><span class="summary-val">$500 with ≥ 85% confidence</span></div>
+      <div class="summary-row"><span class="summary-key">Human review above</span><span class="summary-val">$2,000 (mandatory)</span></div>
+      <div class="summary-row"><span class="summary-key">SLA</span><span class="summary-val">24 hours</span></div>
+      <div class="summary-row"><span class="summary-key">Reviewers</span><span class="summary-val">Sarah Kim (Adjuster) · Marcus Torres (Supervisor)</span></div>
+    </div>
+
+    <!-- ACTIONS -->
+    <div style="display:flex;gap:12px;justify-content:space-between;align-items:center;">
+      <a href="03_agent_detail.html" class="btn">&larr; Back to agent</a>
+      <div style="display:flex;gap:10px;">
+        <button class="btn">Save draft</button>
+        <button class="btn btn-p btn-lg" onclick="location.href='05_dashboard.html'">Activate agent &rarr;</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+function connectDoc() {
+  const row = document.getElementById('doc-row');
+  row.classList.add('connected');
+  row.querySelector('button').outerHTML = '<button class="btn btn-success btn-sm">✓ Connected</button>';
+}
+</script>
+</body>
+</html>

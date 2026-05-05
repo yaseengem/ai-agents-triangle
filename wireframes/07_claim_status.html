@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Claim Status — AgentIQ</title>
+<style>
+:root{--bg:#0D0F12;--s:#161A20;--s2:#1E2329;--s3:#252B33;--b:#2A3040;--b2:#353D4A;--t:#F0F2F5;--t2:#8B95A3;--t3:#545F6E;--ac:#4F8EF7;--acd:#1C2E4A;--gn:#34D399;--gnd:#0D2E22;--am:#FBBF24;--amd:#2D2210;--rd:#F87171;--rdd:#2D1010;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;background:var(--bg);color:var(--t);font-size:14px;line-height:1.6;}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;height:56px;padding:0 40px;display:flex;align-items:center;justify-content:space-between;background:rgba(13,15,18,0.96);border-bottom:1px solid var(--b);}
+.logo{display:flex;align-items:center;gap:9px;text-decoration:none;}
+.logo-mark{width:30px;height:30px;background:var(--ac);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:15px;}
+.logo-text{font-size:15px;font-weight:700;color:var(--t);}
+.logo-text span{color:var(--ac);}
+.nav-links{display:flex;align-items:center;gap:28px;}
+.nav-links a{font-size:13px;color:var(--t2);text-decoration:none;transition:color .15s;}
+.nav-links a:hover,.nav-links a.active{color:var(--t);}
+.nav-right{display:flex;align-items:center;gap:8px;}
+.avatar{width:30px;height:30px;border-radius:50%;background:var(--acd);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--ac);}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;font-family:inherit;font-size:13px;font-weight:500;padding:8px 16px;border-radius:7px;cursor:pointer;border:1px solid var(--b2);background:var(--s2);color:var(--t);transition:all .15s;text-decoration:none;}
+.btn:hover{background:var(--s3);}
+.btn-p{background:var(--ac);border-color:var(--ac);color:#fff;}
+.btn-p:hover{background:#6b9ff8;}
+.btn-sm{font-size:12px;padding:6px 12px;}
+.tag{display:inline-flex;align-items:center;font-size:11px;font-weight:500;padding:4px 10px;border-radius:20px;}
+.tg{background:var(--gnd);color:var(--gn);}
+.tam{background:var(--amd);color:var(--am);}
+.tr{background:var(--rdd);color:var(--rd);}
+.tb{background:var(--acd);color:var(--ac);}
+.card{background:var(--s);border:1px solid var(--b);border-radius:10px;padding:20px;}
+/* CLAIM TABS */
+.claim-tabs{display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap;}
+.claim-tab{background:var(--s2);border:1px solid var(--b2);border-radius:9px;padding:12px 16px;cursor:pointer;transition:all .2s;flex:1;min-width:180px;}
+.claim-tab:hover{border-color:var(--b2);background:var(--s3);}
+.claim-tab.active{border-color:var(--ac);background:var(--acd);}
+.ct-id{font-size:12px;font-weight:600;color:var(--ac);margin-bottom:3px;}
+.ct-proc{font-size:13px;font-weight:500;color:var(--t);margin-bottom:3px;}
+.ct-date{font-size:11px;color:var(--t3);}
+/* TIMELINE */
+.tl{display:flex;flex-direction:column;}
+.tl-item{display:flex;gap:16px;}
+.tl-line-wrap{display:flex;flex-direction:column;align-items:center;}
+.tl-dot{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;border:2px solid var(--b2);}
+.tl-dot.done{background:var(--gnd);border-color:var(--gn);}
+.tl-dot.active{background:var(--acd);border-color:var(--ac);}
+.tl-dot.pending{background:var(--s2);border-color:var(--b2);}
+.tl-dot.denied{background:var(--rdd);border-color:var(--rd);}
+.tl-connector{width:2px;flex:1;min-height:16px;margin:4px 0;}
+.tl-connector.done{background:var(--gn);}
+.tl-connector.pending{background:var(--b2);}
+.tl-body{padding-bottom:24px;flex:1;}
+.tl-title{font-size:14px;font-weight:600;color:var(--t);margin-bottom:3px;}
+.tl-title.active{color:var(--ac);}
+.tl-title.pending{color:var(--t3);}
+.tl-meta{font-size:12px;color:var(--t3);margin-bottom:6px;}
+.tl-note{font-size:13px;color:var(--t2);line-height:1.65;background:var(--s2);border-radius:8px;padding:11px 14px;margin-top:6px;}
+/* SUMMARY GRID */
+.summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:13px;}
+.sg-item{background:var(--s2);border-radius:8px;padding:11px 14px;}
+.sg-label{font-size:11px;color:var(--t3);margin-bottom:3px;}
+.sg-val{font-size:13px;font-weight:500;color:var(--t);}
+/* DECISION BOX */
+.decision-box{border-radius:10px;padding:18px;margin-bottom:14px;}
+.decision-box.approved{background:var(--gnd);border:1px solid var(--gn);}
+.decision-box.partial{background:var(--amd);border:1px solid var(--am);}
+.decision-box.pending-d{background:var(--acd);border:1px solid var(--ac);}
+.decision-box.denied{background:var(--rdd);border:1px solid var(--rd);}
+.db-title{font-size:15px;font-weight:700;margin-bottom:4px;}
+.db-amount{font-size:26px;font-weight:700;margin-bottom:6px;}
+.db-reason{font-size:13px;color:var(--t2);line-height:1.65;}
+/* DOC LIST */
+.doc-item{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--b);font-size:13px;}
+.doc-item:last-child{border-bottom:none;}
+/* FAQ */
+.faq-item{padding:12px 0;border-bottom:1px solid var(--b);cursor:pointer;}
+.faq-item:last-child{border-bottom:none;}
+.faq-q{font-size:13px;font-weight:500;color:var(--t);display:flex;justify-content:space-between;align-items:center;}
+.faq-a{font-size:12px;color:var(--t2);line-height:1.7;margin-top:8px;display:none;}
+.faq-item.open .faq-a{display:block;}
+.faq-item.open .faq-arrow{transform:rotate(180deg);}
+.faq-arrow{transition:transform .2s;color:var(--t3);}
+/* CONF BAR */
+.conf-wrap{display:flex;align-items:center;gap:10px;margin-top:6px;}
+.conf-bar{flex:1;height:6px;border-radius:3px;background:var(--s3);overflow:hidden;}
+.conf-fill{height:100%;border-radius:3px;}
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="logo" href="01_homepage.html"><div class="logo-mark">🤖</div><span class="logo-text">Agent<span>IQ</span></span></a>
+  <div class="nav-links">
+    <a href="06_submit_claim.html">Submit Claim</a>
+    <a href="07_claim_status.html" class="active">My Claims</a>
+    <a href="#">Help</a>
+  </div>
+  <div class="nav-right">
+    <button class="btn btn-sm btn-p" onclick="location.href='06_submit_claim.html'">+ New claim</button>
+    <div class="avatar">JS</div>
+  </div>
+</nav>
+
+<div style="padding-top:56px;">
+  <div style="max-width:860px;margin:0 auto;padding:32px 24px;">
+
+    <!-- PAGE TITLE -->
+    <div style="margin-bottom:24px;">
+      <h1 style="font-size:22px;font-weight:700;color:var(--t);margin-bottom:5px;">My claims</h1>
+      <p style="font-size:13px;color:var(--t2);">John Smith &nbsp;&bull;&nbsp; Member ID: GHP-204811 &nbsp;&bull;&nbsp; Plan: BlueCross PPO Gold</p>
+    </div>
+
+    <!-- CLAIM SELECTOR TABS -->
+    <div class="claim-tabs">
+      <div class="claim-tab active" onclick="showClaim('pending',this)">
+        <div class="ct-id">CLM-2026-08841</div>
+        <div class="ct-proc">Knee replacement — CPT 27447</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:5px;">
+          <span class="ct-date">Apr 15, 2026</span>
+          <span class="tag tam">In Review</span>
+        </div>
+      </div>
+      <div class="claim-tab" onclick="showClaim('approved',this)">
+        <div class="ct-id">CLM-2026-07214</div>
+        <div class="ct-proc">Office visit — CPT 99213</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:5px;">
+          <span class="ct-date">Feb 8, 2026</span>
+          <span class="tag tg">Approved</span>
+        </div>
+      </div>
+      <div class="claim-tab" onclick="showClaim('denied',this)">
+        <div class="ct-id">CLM-2025-04891</div>
+        <div class="ct-proc">MRI Brain — CPT 70553</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:5px;">
+          <span class="ct-date">Nov 12, 2025</span>
+          <span class="tag tr">Denied</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ CLAIM VIEW: IN REVIEW ═══ -->
+    <div id="claim-pending">
+      <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;">
+        <div style="flex:1;min-width:300px;">
+
+          <!-- DECISION STATUS -->
+          <div class="decision-box pending-d" style="margin-bottom:14px;">
+            <div class="db-title" style="color:var(--ac);">⏳ Your claim is being reviewed</div>
+            <div style="font-size:13px;color:var(--t2);line-height:1.65;margin-top:4px;">Our AI agent has completed its analysis and a claims adjuster is reviewing your case. You'll receive a decision by email within 24 hours.</div>
+          </div>
+
+          <!-- TIMELINE -->
+          <div class="card" style="margin-bottom:14px;">
+            <div style="font-size:14px;font-weight:600;color:var(--t);margin-bottom:18px;">Processing status</div>
+            <div class="tl">
+              <div class="tl-item">
+                <div class="tl-line-wrap"><div class="tl-dot done">✓</div><div class="tl-connector done"></div></div>
+                <div class="tl-body">
+                  <div class="tl-title">Claim received</div>
+                  <div class="tl-meta">Apr 15, 2026 at 10:23 AM</div>
+                  <div class="tl-note">All 3 documents received successfully — EOB, surgical report and pre-authorization letter.</div>
+                </div>
+              </div>
+              <div class="tl-item">
+                <div class="tl-line-wrap"><div class="tl-dot done">✓</div><div class="tl-connector done"></div></div>
+                <div class="tl-body">
+                  <div class="tl-title">Documents verified</div>
+                  <div class="tl-meta">Apr 15, 2026 at 10:24 AM</div>
+                  <div class="tl-note">EOB, surgical report and pre-authorization letter all confirmed complete and valid.</div>
+                </div>
+              </div>
+              <div class="tl-item">
+                <div class="tl-line-wrap"><div class="tl-dot done">✓</div><div class="tl-connector done"></div></div>
+                <div class="tl-body">
+                  <div class="tl-title">Coverage confirmed</div>
+                  <div class="tl-meta">Apr 15, 2026 at 10:25 AM</div>
+                  <div class="tl-note">Your policy is active, CPT 27447 is covered under your surgical benefit, and your annual deductible has been met.</div>
+                </div>
+              </div>
+              <div class="tl-item">
+                <div class="tl-line-wrap"><div class="tl-dot done">✓</div><div class="tl-connector done"></div></div>
+                <div class="tl-body">
+                  <div class="tl-title">Medical review complete</div>
+                  <div class="tl-meta">Apr 15, 2026 at 10:27 AM</div>
+                  <div class="tl-note">ICD-10 code M17.11 (osteoarthritis, right knee) confirmed as a valid indication for CPT 27447. Medical necessity confirmed.</div>
+                </div>
+              </div>
+              <div class="tl-item">
+                <div class="tl-line-wrap"><div class="tl-dot active">👤</div><div class="tl-connector pending"></div></div>
+                <div class="tl-body">
+                  <div class="tl-title active">Under human review</div>
+                  <div class="tl-meta">Expected decision by Apr 16, 2026</div>
+                  <div class="tl-note" style="background:var(--acd);border:1px solid rgba(79,142,247,.2);">A certified claims adjuster is reviewing your case. This is a standard step for claims above $2,000. No action is needed from you at this time.</div>
+                </div>
+              </div>
+              <div class="tl-item">
+                <div class="tl-line-wrap"><div class="tl-dot pending">📨</div></div>
+                <div class="tl-body">
+                  <div class="tl-title pending">Decision &amp; communication</div>
+                  <div class="tl-meta">Pending adjuster review</div>
+                  <div class="tl-note">Once approved, you'll receive a detailed email with the full decision — what was approved, the amount, any adjustments and reasons.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- FAQ -->
+          <div class="card">
+            <div style="font-size:14px;font-weight:600;color:var(--t);margin-bottom:14px;">Frequently asked questions</div>
+            <div class="faq-item" onclick="toggleFaq(this)">
+              <div class="faq-q">Why is my claim under human review? <span class="faq-arrow">▾</span></div>
+              <div class="faq-a">Claims above $2,000 are routinely reviewed by a certified adjuster to ensure accuracy. This is a standard process and does not mean there is a problem with your claim.</div>
+            </div>
+            <div class="faq-item" onclick="toggleFaq(this)">
+              <div class="faq-q">How long will the review take? <span class="faq-arrow">▾</span></div>
+              <div class="faq-a">Most claims are reviewed within 24 hours. You will receive an email as soon as a decision is made.</div>
+            </div>
+            <div class="faq-item" onclick="toggleFaq(this)">
+              <div class="faq-q">Can I add more documents? <span class="faq-arrow">▾</span></div>
+              <div class="faq-a">Yes. You can upload additional documents to support your claim using the button below. The adjuster will be notified.</div>
+            </div>
+            <div class="faq-item" onclick="toggleFaq(this)">
+              <div class="faq-q">What if my claim is partially approved? <span class="faq-arrow">▾</span></div>
+              <div class="faq-a">If your claim is approved for a lower amount than billed, the decision email will explain exactly why — for example, out-of-network rate adjustments or plan limits — and what you can do next.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT PANEL -->
+        <div style="width:240px;flex-shrink:0;">
+          <div class="card" style="margin-bottom:12px;">
+            <div style="font-size:13px;font-weight:600;color:var(--t);margin-bottom:12px;">Claim summary</div>
+            <div class="summary-grid">
+              <div class="sg-item"><div class="sg-label">Claim ID</div><div class="sg-val" style="color:var(--ac);">CLM-2026-08841</div></div>
+              <div class="sg-item"><div class="sg-label">Status</div><div class="sg-val"><span class="tag tam">In Review</span></div></div>
+              <div class="sg-item"><div class="sg-label">Submitted</div><div class="sg-val">Apr 15, 2026</div></div>
+              <div class="sg-item"><div class="sg-label">Expected by</div><div class="sg-val">Apr 16, 2026</div></div>
+              <div class="sg-item"><div class="sg-label">Provider</div><div class="sg-val">Mercy General Hospital</div></div>
+              <div class="sg-item"><div class="sg-label">Service date</div><div class="sg-val">Mar 20, 2026</div></div>
+              <div class="sg-item"><div class="sg-label">Procedure</div><div class="sg-val">CPT 27447 — Knee replacement</div></div>
+              <div class="sg-item"><div class="sg-label">Diagnosis</div><div class="sg-val">ICD M17.11 — Osteoarthritis</div></div>
+            </div>
+            <div style="border-top:1px solid var(--b);margin-top:12px;padding-top:12px;">
+              <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;"><span style="color:var(--t3);">Amount billed</span><span style="font-weight:600;color:var(--t);">$18,500.00</span></div>
+              <div style="display:flex;justify-content:space-between;font-size:13px;"><span style="color:var(--t3);">Amount approved</span><span style="font-weight:600;color:var(--am);">Pending</span></div>
+            </div>
+          </div>
+
+          <div class="card" style="margin-bottom:12px;">
+            <div style="font-size:13px;font-weight:600;color:var(--t);margin-bottom:10px;">Documents submitted</div>
+            <div class="doc-item"><span style="font-size:16px;">📄</span><span style="font-size:12px;color:var(--ac);cursor:pointer;">EOB_MercyGeneral_Mar2026.pdf</span></div>
+            <div class="doc-item"><span style="font-size:16px;">📄</span><span style="font-size:12px;color:var(--ac);cursor:pointer;">SurgicalReport_CPT27447.pdf</span></div>
+            <div class="doc-item"><span style="font-size:16px;">📄</span><span style="font-size:12px;color:var(--ac);cursor:pointer;">PreAuthorization_GHP204811.pdf</span></div>
+            <button class="btn btn-sm" style="width:100%;margin-top:10px;">+ Upload more documents</button>
+          </div>
+
+          <div class="card">
+            <div style="font-size:13px;font-weight:600;color:var(--t);margin-bottom:10px;">Need help?</div>
+            <div style="font-size:12px;color:var(--t2);line-height:1.65;margin-bottom:10px;">If you have questions about your claim, our support team is available Mon–Fri 8am–6pm.</div>
+            <button class="btn btn-sm" style="width:100%;margin-bottom:7px;">💬 Chat with support</button>
+            <button class="btn btn-sm" style="width:100%;">📞 Call 1-800-555-0199</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ CLAIM VIEW: APPROVED (PARTIAL) ═══ -->
+    <div id="claim-approved" style="display:none;">
+      <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;">
+        <div style="flex:1;min-width:300px;">
+
+          <div class="decision-box partial" style="margin-bottom:14px;">
+            <div class="db-title" style="color:var(--am);">⚠️ Partially approved</div>
+            <div class="db-amount" style="color:var(--gn);">$220.00 approved</div>
+            <div class="db-reason">Your claim for $285 was partially approved. $65 was not covered as your office co-pay for specialist visits is $65. Net amount approved for reimbursement: $220.</div>
+          </div>
+
+          <div class="card" style="margin-bottom:14px;">
+            <div style="font-size:14px;font-weight:600;color:var(--t);margin-bottom:18px;">Processing history</div>
+            <div class="tl">
+              <div class="tl-item"><div class="tl-line-wrap"><div class="tl-dot done">✓</div><div class="tl-connector done"></div></div><div class="tl-body"><div class="tl-title">Claim received</div><div class="tl-meta">Feb 8, 2026 at 9:10 AM</div></div></div>
+              <div class="tl-item"><div class="tl-line-wrap"><div class="tl-dot done">✓</div><div class="tl-connector done"></div></div><div class="tl-body"><div class="tl-title">Documents verified</div><div class="tl-meta">Feb 8, 2026 at 9:10 AM</div></div></div>
+              <div class="tl-item"><div class="tl-line-wrap"><div class="tl-dot done">✓</div><div class="tl-connector done"></div></div><div class="tl-body"><div class="tl-title">Coverage confirmed</div><div class="tl-meta">Feb 8, 2026 at 9:11 AM</div></div></div>
+              <div class="tl-item"><div class="tl-line-wrap"><div class="tl-dot done">✓</div><div class="tl-connector done"></div></div><div class="tl-body"><div class="tl-title">Auto-approved by AI agent</div><div class="tl-meta">Feb 8, 2026 at 9:12 AM &nbsp;&bull;&nbsp; Confidence 96%</div></div></div>
+              <div class="tl-item"><div class="tl-line-wrap"><div class="tl-dot done">📨</div></div><div class="tl-body"><div class="tl-title">Decision sent to you</div><div class="tl-meta">Feb 8, 2026 at 9:12 AM</div><div class="tl-note">Decision email sent to john.smith@email.com with full breakdown and payment details.</div></div></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div style="font-size:14px;font-weight:600;color:var(--t);margin-bottom:12px;">Decision breakdown</div>
+            <div style="font-size:13px;">
+              <div style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--b);"><span style="color:var(--t2);">Amount billed</span><span style="color:var(--t);font-weight:500;">$285.00</span></div>
+              <div style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--b);"><span style="color:var(--t2);">Specialist co-pay (your responsibility)</span><span style="color:var(--rd);font-weight:500;">-$65.00</span></div>
+              <div style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--b);"><span style="color:var(--t2);">Plan pays (80% after co-pay)</span><span style="color:var(--gn);font-weight:500;">$220.00</span></div>
+              <div style="display:flex;justify-content:space-between;padding:9px 0;"><span style="color:var(--t);font-weight:600;">Amount approved for payment</span><span style="color:var(--gn);font-weight:700;font-size:15px;">$220.00</span></div>
+            </div>
+            <div style="background:var(--s2);border-radius:8px;padding:12px;margin-top:12px;font-size:12px;color:var(--t2);line-height:1.65;">
+              <strong style="color:var(--t);">Reason for adjustment:</strong> Your BlueCross PPO Gold plan includes a $65 co-pay for specialist office visits (CPT 99213). The remaining $220 was covered at 80% per your plan's in-network benefit schedule.
+            </div>
+          </div>
+        </div>
+
+        <div style="width:240px;flex-shrink:0;">
+          <div class="card" style="margin-bottom:12px;">
+            <div style="font-size:13px;font-weight:600;color:var(--t);margin-bottom:12px;">Claim summary</div>
+            <div class="summary-grid">
+              <div class="sg-item"><div class="sg-label">Claim ID</div><div class="sg-val" style="color:var(--ac);">CLM-2026-07214</div></div>
+              <div class="sg-item"><div class="sg-label">Status</div><div class="sg-val"><span class="tag tg">Approved</span></div></div>
+              <div class="sg-item"><div class="sg-label">Submitted</div><div class="sg-val">Feb 8, 2026</div></div>
+              <div class="sg-item"><div class="sg-label">Decided</div><div class="sg-val">Feb 8, 2026</div></div>
+              <div class="sg-item"><div class="sg-label">Procedure</div><div class="sg-val">CPT 99213 — Office visit</div></div>
+              <div class="sg-item"><div class="sg-label">Provider</div><div class="sg-val">Dr. Patel, MD</div></div>
+            </div>
+            <div style="border-top:1px solid var(--b);margin-top:12px;padding-top:12px;">
+              <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;"><span style="color:var(--t3);">Amount billed</span><span style="font-weight:600;color:var(--t);">$285.00</span></div>
+              <div style="display:flex;justify-content:space-between;font-size:13px;"><span style="color:var(--t3);">Amount approved</span><span style="font-weight:600;color:var(--gn);">$220.00</span></div>
+            </div>
+          </div>
+          <div class="card">
+            <div style="font-size:13px;font-weight:600;color:var(--t);margin-bottom:8px;">Not happy with this decision?</div>
+            <div style="font-size:12px;color:var(--t2);line-height:1.65;margin-bottom:10px;">You have the right to appeal within 180 days of the decision date.</div>
+            <button class="btn btn-sm" style="width:100%;margin-bottom:7px;">File an appeal</button>
+            <button class="btn btn-sm" style="width:100%;">Download decision letter</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ CLAIM VIEW: DENIED ═══ -->
+    <div id="claim-denied" style="display:none;">
+      <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;">
+        <div style="flex:1;min-width:300px;">
+
+          <div class="decision-box denied" style="margin-bottom:14px;">
+            <div class="db-title" style="color:var(--rd);">✗ Claim denied</div>
+            <div class="db-amount" style="color:var(--rd);">$0 approved</div>
+            <div class="db-reason">Your claim for CPT 70553 (Brain MRI) was denied because no pre-authorization was obtained prior to the procedure. Pre-authorization is required for this procedure under your plan.</div>
+          </div>
+
+          <div class="card" style="margin-bottom:14px;">
+            <div style="font-size:14px;font-weight:600;color:var(--t);margin-bottom:18px;">Processing history</div>
+            <div class="tl">
+              <div class="tl-item"><div class="tl-line-wrap"><div class="tl-dot done">✓</div><div class="tl-connector done"></div></div><div class="tl-body"><div class="tl-title">Claim received</div><div class="tl-meta">Nov 12, 2025 at 2:14 PM</div></div></div>
+              <div class="tl-item"><div class="tl-line-wrap"><div class="tl-dot done">✓</div><div class="tl-connector done"></div></div><div class="tl-body"><div class="tl-title">Documents verified</div><div class="tl-meta">Nov 12, 2025 at 2:15 PM</div></div></div>
+              <div class="tl-item"><div class="tl-line-wrap"><div class="tl-dot denied">✗</div><div class="tl-connector done"></div></div><div class="tl-body"><div class="tl-title" style="color:var(--rd);">Policy check failed — pre-auth missing</div><div class="tl-meta">Nov 12, 2025 at 2:15 PM &nbsp;&bull;&nbsp; Confidence 93%</div><div class="tl-note" style="background:var(--rdd);border:1px solid rgba(248,113,113,.2);">CPT 70553 (Brain MRI) requires pre-authorization under your plan. No pre-authorization record was found in your policy file for this service date.</div></div></div>
+              <div class="tl-item"><div class="tl-line-wrap"><div class="tl-dot done">✓</div><div class="tl-connector done"></div></div><div class="tl-body"><div class="tl-title">Reviewed &amp; confirmed by adjuster</div><div class="tl-meta">Nov 12, 2025 at 4:22 PM &nbsp;&bull;&nbsp; Sarah K.</div></div></div>
+              <div class="tl-item"><div class="tl-line-wrap"><div class="tl-dot denied">📨</div></div><div class="tl-body"><div class="tl-title" style="color:var(--rd);">Denial notice sent</div><div class="tl-meta">Nov 12, 2025 at 4:22 PM</div></div></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div style="font-size:14px;font-weight:600;color:var(--t);margin-bottom:10px;">Your options</div>
+            <div style="display:flex;flex-direction:column;gap:10px;">
+              <div style="background:var(--s2);border-radius:8px;padding:13px;">
+                <div style="font-size:13px;font-weight:600;color:var(--t);margin-bottom:4px;">Option 1 — File an appeal</div>
+                <div style="font-size:12px;color:var(--t2);margin-bottom:8px;">If you believe pre-authorization was obtained or was not required, you can file a formal appeal within 180 days.</div>
+                <button class="btn btn-sm btn-p">File an appeal</button>
+              </div>
+              <div style="background:var(--s2);border-radius:8px;padding:13px;">
+                <div style="font-size:13px;font-weight:600;color:var(--t);margin-bottom:4px;">Option 2 — Request retroactive authorization</div>
+                <div style="font-size:12px;color:var(--t2);margin-bottom:8px;">In some cases, retroactive pre-authorization may be granted if the procedure was medically urgent.</div>
+                <button class="btn btn-sm">Request retro auth</button>
+              </div>
+              <div style="background:var(--s2);border-radius:8px;padding:13px;">
+                <div style="font-size:13px;font-weight:600;color:var(--t);margin-bottom:4px;">Option 3 — Contact support</div>
+                <div style="font-size:12px;color:var(--t2);margin-bottom:8px;">Speak with a claims specialist who can walk you through your options.</div>
+                <button class="btn btn-sm">Contact support</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="width:240px;flex-shrink:0;">
+          <div class="card" style="margin-bottom:12px;">
+            <div style="font-size:13px;font-weight:600;color:var(--t);margin-bottom:12px;">Claim summary</div>
+            <div class="summary-grid">
+              <div class="sg-item"><div class="sg-label">Claim ID</div><div class="sg-val" style="color:var(--ac);">CLM-2025-04891</div></div>
+              <div class="sg-item"><div class="sg-label">Status</div><div class="sg-val"><span class="tag tr">Denied</span></div></div>
+              <div class="sg-item"><div class="sg-label">Submitted</div><div class="sg-val">Nov 12, 2025</div></div>
+              <div class="sg-item"><div class="sg-label">Decided</div><div class="sg-val">Nov 12, 2025</div></div>
+              <div class="sg-item"><div class="sg-label">Procedure</div><div class="sg-val">CPT 70553 — Brain MRI</div></div>
+              <div class="sg-item"><div class="sg-label">Denial reason</div><div class="sg-val" style="color:var(--rd);">Missing pre-authorization</div></div>
+            </div>
+            <div style="border-top:1px solid var(--b);margin-top:12px;padding-top:12px;">
+              <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;"><span style="color:var(--t3);">Amount billed</span><span style="font-weight:600;color:var(--t);">$6,200.00</span></div>
+              <div style="display:flex;justify-content:space-between;font-size:13px;"><span style="color:var(--t3);">Amount approved</span><span style="font-weight:600;color:var(--rd);">$0.00</span></div>
+            </div>
+          </div>
+          <div class="card">
+            <div style="font-size:13px;font-weight:600;color:var(--t);margin-bottom:6px;">Appeal deadline</div>
+            <div style="font-size:22px;font-weight:700;color:var(--am);margin-bottom:4px;">May 11, 2026</div>
+            <div style="font-size:12px;color:var(--t3);margin-bottom:10px;">180 days from denial date</div>
+            <button class="btn btn-sm btn-p" style="width:100%;">File appeal now</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+function showClaim(type, el) {
+  document.querySelectorAll('.claim-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('claim-pending').style.display = 'none';
+  document.getElementById('claim-approved').style.display = 'none';
+  document.getElementById('claim-denied').style.display = 'none';
+  document.getElementById('claim-' + type).style.display = 'block';
+}
+function toggleFaq(el) {
+  el.classList.toggle('open');
+}
+</script>
+</body>
+</html>

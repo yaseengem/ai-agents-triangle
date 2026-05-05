@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Supervisor Dashboard — AgentIQ</title>
+<style>
+:root{--bg:#0D0F12;--s:#161A20;--s2:#1E2329;--s3:#252B33;--b:#2A3040;--b2:#353D4A;--t:#F0F2F5;--t2:#8B95A3;--t3:#545F6E;--ac:#4F8EF7;--acd:#1C2E4A;--gn:#34D399;--gnd:#0D2E22;--am:#FBBF24;--amd:#2D2210;--rd:#F87171;--rdd:#2D1010;--tl:#2DD4BF;--tld:#0D2D2A;--pu:#A78BFA;--pud:#1E1635;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;background:var(--bg);color:var(--t);font-size:14px;line-height:1.6;}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;height:56px;padding:0 40px;display:flex;align-items:center;justify-content:space-between;background:rgba(13,15,18,0.96);border-bottom:1px solid var(--b);}
+.logo{display:flex;align-items:center;gap:9px;text-decoration:none;}
+.logo-mark{width:30px;height:30px;background:var(--ac);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:15px;}
+.logo-text{font-size:15px;font-weight:700;color:var(--t);}
+.logo-text span{color:var(--ac);}
+.nav-links{display:flex;align-items:center;gap:28px;}
+.nav-links a{font-size:13px;color:var(--t2);text-decoration:none;transition:color .15s;}
+.nav-links a:hover,.nav-links a.active{color:var(--t);}
+.nav-right{display:flex;align-items:center;gap:8px;}
+.avatar{width:30px;height:30px;border-radius:50%;background:var(--pud);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--pu);}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;font-family:inherit;font-size:13px;font-weight:500;padding:8px 16px;border-radius:7px;cursor:pointer;border:1px solid var(--b2);background:var(--s2);color:var(--t);transition:all .15s;text-decoration:none;}
+.btn:hover{background:var(--s3);}
+.btn-p{background:var(--ac);border-color:var(--ac);color:#fff;}
+.btn-p:hover{background:#6b9ff8;}
+.btn-sm{font-size:12px;padding:6px 12px;}
+.btn-danger{background:var(--rdd);border-color:var(--rd);color:var(--rd);}
+.btn-success{background:var(--gnd);border-color:var(--gn);color:var(--gn);}
+.tag{display:inline-flex;align-items:center;font-size:11px;font-weight:500;padding:3px 9px;border-radius:20px;}
+.tg{background:var(--gnd);color:var(--gn);}
+.tam{background:var(--amd);color:var(--am);}
+.tr{background:var(--rdd);color:var(--rd);}
+.tb{background:var(--acd);color:var(--ac);}
+.tp{background:var(--pud);color:var(--pu);}
+.tgr{background:var(--s3);color:var(--t2);}
+input,select{font-family:inherit;font-size:13px;color:var(--t);background:var(--s2);border:1px solid var(--b2);border-radius:7px;padding:8px 12px;width:100%;outline:none;transition:border-color .15s;}
+input:focus,select:focus{border-color:var(--ac);}
+select option{background:var(--s2);}
+/* LAYOUT */
+.shell{display:flex;padding-top:56px;min-height:100vh;}
+.sidebar{width:220px;flex-shrink:0;background:var(--s);border-right:1px solid var(--b);padding:20px 14px;position:sticky;top:56px;height:calc(100vh - 56px);overflow-y:auto;}
+.sidebar-label{font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;padding:0 8px;}
+.sidebar-section{margin-bottom:24px;}
+.sl{display:flex;align-items:center;gap:9px;font-size:13px;padding:8px 10px;border-radius:7px;color:var(--t2);cursor:pointer;margin-bottom:2px;text-decoration:none;transition:all .15s;}
+.sl:hover{background:var(--s2);color:var(--t);}
+.sl.active{background:var(--s2);color:var(--t);font-weight:500;}
+.sl .ico{font-size:15px;width:20px;text-align:center;}
+.sl .badge{margin-left:auto;background:var(--am);color:#000;font-size:10px;font-weight:700;padding:1px 6px;border-radius:20px;}
+.sl .badge-red{background:var(--rd);color:#fff;}
+.main{flex:1;min-width:0;padding:0;}
+/* TOOLBAR */
+.toolbar{background:var(--s);border-bottom:1px solid var(--b);padding:14px 32px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+/* STATS GRID */
+.stats-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:0;border-bottom:1px solid var(--b);}
+.sc{padding:16px 20px;border-right:1px solid var(--b);}
+.sc:last-child{border-right:none;}
+.sc-label{font-size:11px;color:var(--t3);margin-bottom:5px;}
+.sc-val{font-size:22px;font-weight:700;color:var(--t);line-height:1;}
+.sc-sub{font-size:11px;color:var(--t3);margin-top:4px;}
+.sc-up{color:var(--gn);}
+.sc-dn{color:var(--rd);}
+/* CARDS */
+.card{background:var(--s);border:1px solid var(--b);border-radius:10px;padding:16px;}
+.card-title{font-size:14px;font-weight:600;color:var(--t);margin-bottom:14px;}
+/* BODY GRID */
+.body-grid{padding:24px 32px;display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+.full-width{grid-column:span 2;}
+/* BAR ROWS */
+.bar-row{display:flex;align-items:center;gap:12px;margin-bottom:10px;}
+.bar-row:last-child{margin-bottom:0;}
+.bar-key{font-size:12px;color:var(--t2);width:160px;flex-shrink:0;}
+.bar-track{flex:1;height:8px;background:var(--s3);border-radius:4px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:4px;}
+.bar-pct{font-size:12px;color:var(--t3);width:44px;text-align:right;}
+/* TABLE */
+.tbl{width:100%;border-collapse:collapse;}
+.tbl th{font-size:11px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;padding:8px 10px;text-align:left;border-bottom:1px solid var(--b);}
+.tbl td{font-size:13px;color:var(--t);padding:10px;border-bottom:1px solid var(--b);vertical-align:middle;}
+.tbl tr:last-child td{border-bottom:none;}
+.tbl tr:hover td{background:var(--s2);cursor:pointer;}
+/* CONF BAR */
+.cb{height:5px;border-radius:3px;background:var(--s3);overflow:hidden;margin-top:4px;width:80px;}
+.cf-g{height:100%;background:var(--gn);border-radius:3px;}
+.cf-m{height:100%;background:var(--am);border-radius:3px;}
+/* ADJUSTER CARD */
+.adj-card{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--b);}
+.adj-card:last-child{border-bottom:none;}
+.adj-avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;}
+.adj-info{flex:1;}
+.adj-name{font-size:13px;font-weight:500;color:var(--t);}
+.adj-meta{font-size:11px;color:var(--t3);}
+.adj-stats{display:flex;gap:12px;text-align:center;}
+.adj-stat-val{font-size:14px;font-weight:600;color:var(--t);}
+.adj-stat-label{font-size:10px;color:var(--t3);}
+/* MINI CHART */
+.mini-bars{display:flex;align-items:flex-end;gap:3px;height:48px;}
+.mini-bar{flex:1;border-radius:2px 2px 0 0;min-width:8px;transition:opacity .15s;cursor:pointer;}
+.mini-bar:hover{opacity:.7;}
+/* DIVIDER */
+.divider{height:1px;background:var(--b);margin:14px 0;}
+/* ALERT ROW */
+.alert-row{display:flex;align-items:flex-start;gap:12px;padding:12px;border-radius:9px;margin-bottom:8px;}
+.alert-row.warn{background:var(--amd);border:1px solid rgba(251,191,36,.2);}
+.alert-row.danger{background:var(--rdd);border:1px solid rgba(248,113,113,.2);}
+.alert-row.info{background:var(--acd);border:1px solid rgba(79,142,247,.2);}
+.alert-icon{font-size:18px;flex-shrink:0;margin-top:1px;}
+.alert-text{flex:1;}
+.alert-title{font-size:13px;font-weight:600;color:var(--t);margin-bottom:2px;}
+.alert-desc{font-size:12px;color:var(--t2);line-height:1.6;}
+/* FINANCIAL TABLE */
+.fin-row{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--b);font-size:13px;}
+.fin-row:last-child{border-bottom:none;}
+.fin-key{color:var(--t2);}
+.fin-val{font-weight:600;color:var(--t);}
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="logo" href="01_homepage.html"><div class="logo-mark">🤖</div><span class="logo-text">Agent<span>IQ</span></span></a>
+  <div class="nav-links">
+    <a href="05_dashboard.html">Dashboard</a>
+    <a href="08_queue.html">Review Queue</a>
+    <a href="10_logs.html">Run Logs</a>
+    <a href="11_rules.html">Rules</a>
+    <a href="12_supervisor.html" class="active">Supervisor</a>
+  </div>
+  <div class="nav-right">
+    <span style="font-size:11px;background:var(--pud);color:var(--pu);padding:3px 9px;border-radius:20px;font-weight:600;">SUPERVISOR</span>
+    <div class="avatar">MT</div>
+  </div>
+</nav>
+
+<div class="shell">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-label">Claims Agent</div>
+      <a class="sl" href="05_dashboard.html"><span class="ico">🏠</span> Dashboard</a>
+      <a class="sl" href="08_queue.html"><span class="ico">📋</span> Review queue <span class="badge">7</span></a>
+      <a class="sl" href="09_review.html"><span class="ico">🔍</span> Claim review</a>
+      <a class="sl" href="10_logs.html"><span class="ico">🧾</span> Run logs</a>
+      <a class="sl" href="11_rules.html"><span class="ico">⚙️</span> Rules engine</a>
+      <a class="sl active" href="12_supervisor.html"><span class="ico">📊</span> Supervisor view</a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">Supervisor actions</div>
+      <a class="sl" href="#"><span class="ico">🚨</span> Escalated to me <span class="badge-red badge">2</span></a>
+      <a class="sl" href="#"><span class="ico">🔁</span> Override history</a>
+      <a class="sl" href="11_rules.html"><span class="ico">⚙️</span> Edit rules</a>
+      <a class="sl" href="#"><span class="ico">👥</span> Manage team</a>
+      <a class="sl" href="#"><span class="ico">📊</span> Export report</a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">Period</div>
+      <a class="sl active"><span class="ico">📅</span> April 2026</a>
+      <a class="sl"><span class="ico">📅</span> March 2026</a>
+      <a class="sl"><span class="ico">📅</span> Q1 2026</a>
+      <a class="sl"><span class="ico">📅</span> Custom range</a>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- TOOLBAR -->
+    <div class="toolbar">
+      <div style="flex:1;">
+        <div style="font-size:17px;font-weight:700;color:var(--t);">Supervisor dashboard</div>
+        <div style="font-size:12px;color:var(--t2);">Claims Processing Agent &nbsp;&bull;&nbsp; BlueCross Regional Health &nbsp;&bull;&nbsp; April 2026</div>
+      </div>
+      <select style="width:140px;"><option>April 2026</option><option>March 2026</option><option>Q1 2026</option></select>
+      <button class="btn btn-sm" onclick="location.href='11_rules.html'">⚙️ Edit rules</button>
+      <button class="btn btn-sm">📊 Export report</button>
+    </div>
+
+    <!-- STATS GRID -->
+    <div class="stats-grid">
+      <div class="sc"><div class="sc-label">Total claims</div><div class="sc-val">1,284</div><div class="sc-sub sc-up">↑ 18% vs Mar</div></div>
+      <div class="sc"><div class="sc-label">Auto-approved</div><div class="sc-val" style="color:var(--gn);">847</div><div class="sc-sub">66% of total</div></div>
+      <div class="sc"><div class="sc-label">Human reviewed</div><div class="sc-val" style="color:var(--am);">398</div><div class="sc-sub">31% of total</div></div>
+      <div class="sc"><div class="sc-label">AI override rate</div><div class="sc-val">8.4%</div><div class="sc-sub sc-dn">↑ 1.2% vs Mar</div></div>
+      <div class="sc"><div class="sc-label">Avg AI confidence</div><div class="sc-val">94.2%</div><div class="sc-sub sc-up">↑ 0.8%</div></div>
+    </div>
+
+    <div class="body-grid">
+
+      <!-- ALERTS -->
+      <div class="full-width">
+        <div class="card-title" style="padding:0 0 0 0;margin-bottom:12px;">🚨 Needs your attention</div>
+        <div class="alert-row danger">
+          <div class="alert-icon">⚠️</div>
+          <div class="alert-text">
+            <div class="alert-title">CLM-08751 — David Chen escalated to you (confidence 54%)</div>
+            <div class="alert-desc">Confidence score below 60% — auto-escalated to supervisor per rules. Brain MRI, $6,200, no pre-auth found. SLA: 6h remaining.</div>
+          </div>
+          <button class="btn btn-sm btn-p" onclick="location.href='09_review.html'" style="flex-shrink:0;margin-left:12px;">Review now</button>
+        </div>
+        <div class="alert-row danger">
+          <div class="alert-icon">🛡️</div>
+          <div class="alert-text">
+            <div class="alert-title">Fraud pattern detected — Provider: Dr. A. Singh (NPI 9988776655)</div>
+            <div class="alert-desc">CPT 99215 billed 6 times in 14 days across 6 different members. Exceeds the 3-in-30-day threshold. All new claims from this provider are on hold.</div>
+          </div>
+          <div style="display:flex;gap:6px;flex-shrink:0;margin-left:12px;">
+            <button class="btn btn-sm btn-danger">Suspend provider</button>
+            <button class="btn btn-sm">Investigate</button>
+          </div>
+        </div>
+        <div class="alert-row warn">
+          <div class="alert-icon">⏰</div>
+          <div class="alert-text">
+            <div class="alert-title">2 claims approaching SLA deadline</div>
+            <div class="alert-desc">CLM-08841 (5h left, Sarah K.) and CLM-08799 (9h left, Sarah K.) are both approaching the 24h SLA. Sarah K. has 4 claims assigned today.</div>
+          </div>
+          <button class="btn btn-sm" onclick="location.href='08_queue.html'" style="flex-shrink:0;margin-left:12px;">View queue</button>
+        </div>
+        <div class="alert-row info">
+          <div class="alert-icon">📋</div>
+          <div class="alert-text">
+            <div class="alert-title">CLM-08681 (James Moore, $38,200) is unassigned</div>
+            <div class="alert-desc">Spinal fusion claim worth $38,200 has been in queue for 3 hours with no adjuster assigned. SLA: 24h.</div>
+          </div>
+          <button class="btn btn-sm" style="flex-shrink:0;margin-left:12px;">Assign adjuster</button>
+        </div>
+      </div>
+
+      <!-- CLAIMS BREAKDOWN -->
+      <div class="card">
+        <div class="card-title">Claims outcome breakdown</div>
+        <div class="bar-row">
+          <div class="bar-key">Auto-approved</div>
+          <div class="bar-track"><div class="bar-fill" style="width:66%;background:var(--gn);"></div></div>
+          <div class="bar-pct" style="color:var(--gn);">847 (66%)</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-key">Adjuster approved</div>
+          <div class="bar-track"><div class="bar-fill" style="width:24%;background:var(--ac);"></div></div>
+          <div class="bar-pct" style="color:var(--ac);">308 (24%)</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-key">Supervisor override</div>
+          <div class="bar-track"><div class="bar-fill" style="width:7%;background:var(--pu);"></div></div>
+          <div class="bar-pct" style="color:var(--pu);">90 (7%)</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-key">Denied</div>
+          <div class="bar-track"><div class="bar-fill" style="width:3%;background:var(--rd);"></div></div>
+          <div class="bar-pct" style="color:var(--rd);">39 (3%)</div>
+        </div>
+        <div class="divider"></div>
+        <div class="card-title" style="font-size:13px;margin-bottom:10px;">Daily volume — April</div>
+        <div class="mini-bars">
+          <div class="mini-bar" style="height:45%;background:var(--acd);"></div>
+          <div class="mini-bar" style="height:52%;background:var(--acd);"></div>
+          <div class="mini-bar" style="height:38%;background:var(--acd);"></div>
+          <div class="mini-bar" style="height:60%;background:var(--acd);"></div>
+          <div class="mini-bar" style="height:70%;background:var(--acd);"></div>
+          <div class="mini-bar" style="height:42%;background:var(--s3);"></div>
+          <div class="mini-bar" style="height:40%;background:var(--s3);"></div>
+          <div class="mini-bar" style="height:65%;background:var(--acd);"></div>
+          <div class="mini-bar" style="height:72%;background:var(--acd);"></div>
+          <div class="mini-bar" style="height:58%;background:var(--acd);"></div>
+          <div class="mini-bar" style="height:80%;background:var(--acd);"></div>
+          <div class="mini-bar" style="height:55%;background:var(--acd);"></div>
+          <div class="mini-bar" style="height:46%;background:var(--s3);"></div>
+          <div class="mini-bar" style="height:43%;background:var(--s3);"></div>
+          <div class="mini-bar" style="height:100%;background:var(--ac);"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--t3);margin-top:4px;"><span>Apr 1</span><span>Today (128)</span></div>
+      </div>
+
+      <!-- FINANCIAL SUMMARY -->
+      <div class="card">
+        <div class="card-title">Financial summary</div>
+        <div class="fin-row"><span class="fin-key">Total billed</span><span class="fin-val">$4,821,400</span></div>
+        <div class="fin-row"><span class="fin-key">Total approved</span><span class="fin-val" style="color:var(--gn);">$3,944,200</span></div>
+        <div class="fin-row"><span class="fin-key">Total denied</span><span class="fin-val" style="color:var(--rd);">$191,800</span></div>
+        <div class="fin-row"><span class="fin-key">Pending (in review)</span><span class="fin-val" style="color:var(--am);">$84,200</span></div>
+        <div class="divider"></div>
+        <div class="fin-row"><span class="fin-key">Approval rate (by amount)</span><span class="fin-val">81.8%</span></div>
+        <div class="fin-row"><span class="fin-key">Avg claim approved</span><span class="fin-val">$3,072</span></div>
+        <div class="fin-row"><span class="fin-key">Avg AI processing time</span><span class="fin-val">11.4s</span></div>
+        <div class="fin-row"><span class="fin-key">Avg human review time</span><span class="fin-val">3.2 hours</span></div>
+        <div class="fin-row"><span class="fin-key">SLA breach rate</span><span class="fin-val" style="color:var(--gn);">0.8%</span></div>
+        <div class="fin-row"><span class="fin-key">Supervisor override rate</span><span class="fin-val" style="color:var(--pu);">7.0%</span></div>
+      </div>
+
+      <!-- ADJUSTER PERFORMANCE -->
+      <div class="card">
+        <div class="card-title">Adjuster performance</div>
+        <div class="adj-card">
+          <div class="adj-avatar" style="background:var(--acd);color:var(--ac);">SK</div>
+          <div class="adj-info">
+            <div class="adj-name">Sarah Kim <span class="tag tg" style="font-size:10px;margin-left:6px;">Top performer</span></div>
+            <div class="adj-meta">Claims Adjuster &nbsp;&bull;&nbsp; Assigned 4 pending</div>
+          </div>
+          <div class="adj-stats">
+            <div><div class="adj-stat-val">182</div><div class="adj-stat-label">Reviewed</div></div>
+            <div><div class="adj-stat-val" style="color:var(--gn);">6.2%</div><div class="adj-stat-label">Override rate</div></div>
+            <div><div class="adj-stat-val">4.1h</div><div class="adj-stat-label">Avg time</div></div>
+          </div>
+        </div>
+        <div class="adj-card">
+          <div class="adj-avatar" style="background:var(--tld);color:var(--tl);">MT</div>
+          <div class="adj-info">
+            <div class="adj-name">Marcus Torres</div>
+            <div class="adj-meta">Claims Adjuster &nbsp;&bull;&nbsp; Assigned 2 pending</div>
+          </div>
+          <div class="adj-stats">
+            <div><div class="adj-stat-val">134</div><div class="adj-stat-label">Reviewed</div></div>
+            <div><div class="adj-stat-val" style="color:var(--am);">9.7%</div><div class="adj-stat-label">Override rate</div></div>
+            <div><div class="adj-stat-val">5.2h</div><div class="adj-stat-label">Avg time</div></div>
+          </div>
+        </div>
+        <div class="adj-card">
+          <div class="adj-avatar" style="background:var(--pud);color:var(--pu);">JL</div>
+          <div class="adj-info">
+            <div class="adj-name">Jamie Lee</div>
+            <div class="adj-meta">Claims Adjuster &nbsp;&bull;&nbsp; 0 pending</div>
+          </div>
+          <div class="adj-stats">
+            <div><div class="adj-stat-val">82</div><div class="adj-stat-label">Reviewed</div></div>
+            <div><div class="adj-stat-val" style="color:var(--am);">10.4%</div><div class="adj-stat-label">Override rate</div></div>
+            <div><div class="adj-stat-val">6.1h</div><div class="adj-stat-label">Avg time</div></div>
+          </div>
+        </div>
+        <div style="margin-top:12px;font-size:12px;color:var(--t3);">Override rate = how often the adjuster changes the AI's recommendation</div>
+      </div>
+
+      <!-- AI TRANSPARENCY METRICS -->
+      <div class="card">
+        <div class="card-title">AI transparency metrics</div>
+        <div class="bar-row">
+          <div class="bar-key">Confidence ≥ 90%</div>
+          <div class="bar-track"><div class="bar-fill" style="width:72%;background:var(--gn);"></div></div>
+          <div class="bar-pct" style="color:var(--gn);">72%</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-key">Confidence 85–90%</div>
+          <div class="bar-track"><div class="bar-fill" style="width:16%;background:var(--ac);"></div></div>
+          <div class="bar-pct" style="color:var(--ac);">16%</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-key">Confidence 75–85%</div>
+          <div class="bar-track"><div class="bar-fill" style="width:9%;background:var(--am);"></div></div>
+          <div class="bar-pct" style="color:var(--am);">9%</div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-key">Confidence &lt; 75%</div>
+          <div class="bar-track"><div class="bar-fill" style="width:3%;background:var(--rd);"></div></div>
+          <div class="bar-pct" style="color:var(--rd);">3%</div>
+        </div>
+        <div class="divider"></div>
+        <div class="fin-row"><span class="fin-key">Most common escalation reason</span><span class="fin-val">Amount &gt; $2,000</span></div>
+        <div class="fin-row"><span class="fin-key">Most overridden AI decision</span><span class="fin-val">OON rate reduction</span></div>
+        <div class="fin-row"><span class="fin-key">Avg steps per claim</span><span class="fin-val">9 / 9</span></div>
+        <div class="fin-row"><span class="fin-key">Rerun rate</span><span class="fin-val">1.8%</span></div>
+        <div class="fin-row"><span class="fin-key">Fraud flags raised</span><span class="fin-val" style="color:var(--rd);">5 this month</span></div>
+      </div>
+
+      <!-- SUPERVISOR ESCALATION QUEUE -->
+      <div class="card full-width">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+          <div class="card-title" style="margin-bottom:0;">Escalated to supervisor</div>
+          <span class="tag tr">2 pending</span>
+        </div>
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th>Claim ID</th>
+              <th>Member</th>
+              <th>Procedure</th>
+              <th>Amount</th>
+              <th>AI Outcome</th>
+              <th>Confidence</th>
+              <th>Escalation reason</th>
+              <th>SLA</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr onclick="location.href='09_review.html'" style="cursor:pointer;">
+              <td style="color:var(--ac);font-weight:600;">CLM-08751</td>
+              <td>David Chen<br/><span style="font-size:11px;color:var(--t3);">GHP-221104</span></td>
+              <td>CPT 70553<br/><span style="font-size:11px;color:var(--t3);">Brain MRI</span></td>
+              <td style="font-weight:600;">$6,200</td>
+              <td><span class="tag tr">Deny — no pre-auth</span></td>
+              <td><span style="color:var(--rd);font-weight:600;">54%</span><div class="cb"><div class="cf-m" style="width:54%;background:var(--rd);"></div></div></td>
+              <td><span class="tag tr">Confidence &lt; 60%</span></td>
+              <td style="color:var(--rd);font-weight:500;">⚠️ 6h left</td>
+              <td>
+                <div style="display:flex;gap:6px;">
+                  <button class="btn btn-sm btn-p" onclick="event.stopPropagation();location.href='09_review.html'">Review</button>
+                  <button class="btn btn-sm btn-success" onclick="event.stopPropagation()">Override</button>
+                </div>
+              </td>
+            </tr>
+            <tr style="cursor:pointer;">
+              <td style="color:var(--ac);font-weight:600;">CLM-08699</td>
+              <td>Multiple members<br/><span style="font-size:11px;color:var(--t3);">Dr. Singh (NPI 9988776655)</span></td>
+              <td>CPT 99215<br/><span style="font-size:11px;color:var(--t3);">Office visit (complex) ×6</span></td>
+              <td style="font-weight:600;">$2,940</td>
+              <td><span class="tag tam">On hold</span></td>
+              <td><span style="color:var(--t3);">—</span></td>
+              <td><span class="tag tr">Fraud pattern — upcoding</span></td>
+              <td style="color:var(--am);font-weight:500;">18h left</td>
+              <td>
+                <div style="display:flex;gap:6px;">
+                  <button class="btn btn-sm btn-danger">Suspend</button>
+                  <button class="btn btn-sm">Investigate</button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- OVERRIDE HISTORY -->
+      <div class="card">
+        <div class="card-title">Recent supervisor overrides</div>
+        <table class="tbl">
+          <thead><tr><th>Claim</th><th>AI said</th><th>You decided</th><th>Reason</th><th>Date</th></tr></thead>
+          <tbody>
+            <tr>
+              <td style="color:var(--ac);">CLM-08612</td>
+              <td style="color:var(--am);">Partial $12,400</td>
+              <td style="color:var(--gn);">Full $15,800</td>
+              <td style="font-size:12px;color:var(--t2);">Member had valid waiver for OON provider</td>
+              <td style="font-size:12px;color:var(--t3);">Apr 13</td>
+            </tr>
+            <tr>
+              <td style="color:var(--ac);">CLM-08580</td>
+              <td style="color:var(--rd);">Deny</td>
+              <td style="color:var(--gn);">Approve $4,200</td>
+              <td style="font-size:12px;color:var(--t2);">Retro pre-auth granted by clinical team</td>
+              <td style="font-size:12px;color:var(--t3);">Apr 11</td>
+            </tr>
+            <tr>
+              <td style="color:var(--ac);">CLM-08541</td>
+              <td style="color:var(--gn);">Approve $9,800</td>
+              <td style="color:var(--rd);">Deny</td>
+              <td style="font-size:12px;color:var(--t2);">Provider flagged by SIU after approval</td>
+              <td style="font-size:12px;color:var(--t3);">Apr 9</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- QUICK ACTIONS -->
+      <div class="card">
+        <div class="card-title">Quick actions</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <button class="btn" style="width:100%;justify-content:flex-start;" onclick="location.href='11_rules.html'">⚙️ &nbsp;Edit agent rules</button>
+          <button class="btn" style="width:100%;justify-content:flex-start;" onclick="location.href='08_queue.html'">📋 &nbsp;View full review queue</button>
+          <button class="btn" style="width:100%;justify-content:flex-start;" onclick="location.href='10_logs.html'">🧾 &nbsp;Full audit log</button>
+          <button class="btn" style="width:100%;justify-content:flex-start;">👥 &nbsp;Reassign claims</button>
+          <button class="btn" style="width:100%;justify-content:flex-start;">📧 &nbsp;Bulk claimant communications</button>
+          <button class="btn" style="width:100%;justify-content:flex-start;">📊 &nbsp;Export compliance report (PDF)</button>
+          <button class="btn" style="width:100%;justify-content:flex-start;">🔒 &nbsp;Lock claims for SIU investigation</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

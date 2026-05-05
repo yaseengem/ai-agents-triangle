@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Claim Review — AgentIQ</title>
+<style>
+:root{--bg:#0D0F12;--s:#161A20;--s2:#1E2329;--s3:#252B33;--b:#2A3040;--b2:#353D4A;--t:#F0F2F5;--t2:#8B95A3;--t3:#545F6E;--ac:#4F8EF7;--acd:#1C2E4A;--gn:#34D399;--gnd:#0D2E22;--am:#FBBF24;--amd:#2D2210;--rd:#F87171;--rdd:#2D1010;--tl:#2DD4BF;--tld:#0D2D2A;--pu:#A78BFA;--pud:#1E1635;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;background:var(--bg);color:var(--t);font-size:14px;line-height:1.6;}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;height:56px;padding:0 40px;display:flex;align-items:center;justify-content:space-between;background:rgba(13,15,18,0.96);border-bottom:1px solid var(--b);}
+.logo{display:flex;align-items:center;gap:9px;text-decoration:none;}
+.logo-mark{width:30px;height:30px;background:var(--ac);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:15px;}
+.logo-text{font-size:15px;font-weight:700;color:var(--t);}
+.logo-text span{color:var(--ac);}
+.nav-links{display:flex;align-items:center;gap:28px;}
+.nav-links a{font-size:13px;color:var(--t2);text-decoration:none;transition:color .15s;}
+.nav-links a:hover,.nav-links a.active{color:var(--t);}
+.nav-right{display:flex;align-items:center;gap:8px;}
+.avatar{width:30px;height:30px;border-radius:50%;background:var(--acd);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--ac);}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;font-family:inherit;font-size:13px;font-weight:500;padding:8px 16px;border-radius:7px;cursor:pointer;border:1px solid var(--b2);background:var(--s2);color:var(--t);transition:all .15s;text-decoration:none;}
+.btn:hover{background:var(--s3);}
+.btn-p{background:var(--ac);border-color:var(--ac);color:#fff;}
+.btn-p:hover{background:#6b9ff8;}
+.btn-sm{font-size:12px;padding:6px 12px;}
+.btn-success{background:var(--gnd);border-color:var(--gn);color:var(--gn);}
+.btn-success:hover{background:#0f3a28;}
+.btn-danger{background:var(--rdd);border-color:var(--rd);color:var(--rd);}
+.btn-danger:hover{background:#3d1515;}
+.btn-warn{background:var(--amd);border-color:var(--am);color:var(--am);}
+.btn-warn:hover{background:#3a2a0a;}
+.btn-lg{font-size:14px;padding:11px 22px;}
+.tag{display:inline-flex;align-items:center;font-size:11px;font-weight:500;padding:3px 9px;border-radius:20px;}
+.tg{background:var(--gnd);color:var(--gn);}
+.tam{background:var(--amd);color:var(--am);}
+.tr{background:var(--rdd);color:var(--rd);}
+.tb{background:var(--acd);color:var(--ac);}
+.tt{background:var(--tld);color:var(--tl);}
+.tgr{background:var(--s3);color:var(--t2);}
+.card{background:var(--s);border:1px solid var(--b);border-radius:10px;padding:16px;}
+input,select,textarea{font-family:inherit;font-size:13px;color:var(--t);background:var(--s2);border:1px solid var(--b2);border-radius:7px;padding:8px 12px;width:100%;outline:none;transition:border-color .15s;}
+input:focus,select:focus,textarea:focus{border-color:var(--ac);}
+input::placeholder,textarea::placeholder{color:var(--t3);}
+select option{background:var(--s2);}
+label{font-size:12px;color:var(--t2);display:block;margin-bottom:5px;}
+.fg{margin-bottom:13px;}
+textarea{resize:vertical;}
+/* TOP BAND */
+.top-band{margin-top:56px;background:var(--s);border-bottom:1px solid var(--b);padding:14px 32px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;}
+.breadcrumb{font-size:12px;color:var(--t3);}
+.breadcrumb a{color:var(--ac);text-decoration:none;}
+.claim-id-title{font-size:17px;font-weight:700;color:var(--t);}
+.claim-subtitle{font-size:12px;color:var(--t2);margin-top:2px;}
+/* BODY LAYOUT */
+.body-wrap{display:flex;max-width:1300px;margin:0 auto;padding:20px 32px;gap:20px;align-items:flex-start;}
+.left-col{flex:1;min-width:0;}
+.right-col{width:300px;flex-shrink:0;}
+/* SECTION TITLES */
+.sec-title{font-size:14px;font-weight:600;color:var(--t);margin-bottom:12px;}
+.sec-label{font-size:11px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;}
+.divider{height:1px;background:var(--b);margin:14px 0;}
+/* AI RECOMMENDATION BOX */
+.ai-rec{background:var(--s);border:1px solid var(--ac);border-radius:10px;padding:16px;margin-bottom:16px;}
+.ai-rec-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.ai-rec-title{font-size:14px;font-weight:600;color:var(--t);display:flex;align-items:center;gap:8px;}
+.conf-block{text-align:right;}
+.conf-score{font-size:22px;font-weight:700;color:var(--am);}
+.conf-label{font-size:11px;color:var(--t3);}
+.conf-bar-wrap{display:flex;align-items:center;gap:8px;margin-top:4px;}
+.conf-bar{flex:1;height:6px;border-radius:3px;background:var(--s3);overflow:hidden;}
+.cf-g{height:100%;background:var(--gn);border-radius:3px;}
+.cf-m{height:100%;background:var(--am);border-radius:3px;}
+.cf-r{height:100%;background:var(--rd);border-radius:3px;}
+.ai-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px;}
+.ai-metric{background:var(--s2);border-radius:8px;padding:11px;}
+.ai-metric-label{font-size:11px;color:var(--t3);margin-bottom:3px;}
+.ai-metric-val{font-size:15px;font-weight:700;color:var(--t);}
+.qa-summary{background:var(--s2);border-radius:8px;padding:12px;font-size:12px;color:var(--t2);line-height:1.7;}
+/* TIMELINE */
+.tl{display:flex;flex-direction:column;}
+.tl-item{display:flex;gap:14px;}
+.tl-line-wrap{display:flex;flex-direction:column;align-items:center;}
+.tl-dot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;border:2px solid var(--b2);}
+.tl-dot.done{background:var(--gnd);border-color:var(--gn);}
+.tl-dot.warn{background:var(--amd);border-color:var(--am);}
+.tl-dot.pending{background:var(--s2);}
+.tl-connector{width:1px;flex:1;min-height:12px;margin:3px 0;}
+.tl-connector.done{background:var(--gn);}
+.tl-connector.pending{background:var(--b2);}
+.tl-body{padding-bottom:16px;flex:1;}
+.tl-title{font-size:13px;font-weight:600;color:var(--t);margin-bottom:2px;}
+.tl-meta{font-size:11px;color:var(--t3);margin-bottom:5px;}
+.tl-detail{font-size:12px;color:var(--t2);background:var(--s2);border-radius:7px;padding:9px 12px;line-height:1.65;}
+.tl-detail.warn{background:var(--amd);border:1px solid rgba(251,191,36,.2);}
+/* RERUN BOX */
+.rerun-box{background:var(--s);border:1px solid var(--b2);border-radius:10px;padding:16px;margin-bottom:16px;}
+/* DECISION PANEL */
+.decision-panel{background:var(--s);border:1px solid var(--b);border-radius:10px;padding:16px;margin-bottom:12px;position:sticky;top:76px;}
+.decision-option{border:1px solid var(--b2);border-radius:8px;padding:11px 14px;margin-bottom:8px;cursor:pointer;transition:all .15s;}
+.decision-option:hover{border-color:var(--b2);background:var(--s2);}
+.decision-option.selected-approve{border-color:var(--gn);background:var(--gnd);}
+.decision-option.selected-modify{border-color:var(--am);background:var(--amd);}
+.decision-option.selected-deny{border-color:var(--rd);background:var(--rdd);}
+.do-title{font-size:13px;font-weight:600;color:var(--t);margin-bottom:2px;}
+.do-desc{font-size:11px;color:var(--t3);}
+/* CLAIMANT SUMMARY */
+.info-row{display:flex;justify-content:space-between;font-size:12px;padding:6px 0;border-bottom:1px solid var(--b);}
+.info-row:last-child{border-bottom:none;}
+.info-key{color:var(--t3);}
+.info-val{color:var(--t);font-weight:500;text-align:right;}
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:500;align-items:center;justify-content:center;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--s);border:1px solid var(--b2);border-radius:14px;padding:24px;width:100%;max-width:460px;}
+.modal-title{font-size:16px;font-weight:600;color:var(--t);margin-bottom:14px;}
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="logo" href="01_homepage.html"><div class="logo-mark">🤖</div><span class="logo-text">Agent<span>IQ</span></span></a>
+  <div class="nav-links">
+    <a href="05_dashboard.html">Dashboard</a>
+    <a href="08_queue.html">Review Queue</a>
+    <a href="10_logs.html">Run Logs</a>
+    <a href="11_rules.html">Rules</a>
+    <a href="12_supervisor.html">Supervisor</a>
+  </div>
+  <div class="nav-right">
+    <div class="avatar">SK</div>
+  </div>
+</nav>
+
+<!-- TOP BAND -->
+<div class="top-band">
+  <div>
+    <div class="breadcrumb"><a href="08_queue.html">← Review queue</a> &nbsp;/&nbsp; CLM-2026-08841</div>
+    <div class="claim-id-title">CLM-2026-08841 — John Smith</div>
+    <div class="claim-subtitle">Knee replacement · CPT 27447 · $18,500 billed · Submitted Apr 15, 2026</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+    <span class="tag tam">Pending review</span>
+    <span style="font-size:12px;color:var(--rd);font-weight:500;">⚠️ SLA: 5h remaining</span>
+    <button class="btn btn-sm" onclick="location.href='08_queue.html'">&larr; Back to queue</button>
+    <button class="btn btn-sm">⟨ Prev</button>
+    <button class="btn btn-sm">Next ⟩</button>
+  </div>
+</div>
+
+<div class="body-wrap">
+
+  <!-- LEFT COLUMN -->
+  <div class="left-col">
+
+    <!-- AI RECOMMENDATION -->
+    <div class="ai-rec">
+      <div class="ai-rec-header">
+        <div class="ai-rec-title">🤖 AI recommendation</div>
+        <div class="conf-block">
+          <div class="conf-label">Confidence score</div>
+          <div class="conf-score">78%</div>
+          <div class="conf-bar-wrap">
+            <div class="conf-bar" style="width:120px;"><div class="cf-m" style="width:78%;"></div></div>
+            <span style="font-size:11px;color:var(--am);">Below 85% threshold</span>
+          </div>
+        </div>
+      </div>
+      <div class="ai-metrics">
+        <div class="ai-metric">
+          <div class="ai-metric-label">Recommended decision</div>
+          <div class="ai-metric-val" style="color:var(--am);">Partial approval</div>
+        </div>
+        <div class="ai-metric">
+          <div class="ai-metric-label">Recommended amount</div>
+          <div class="ai-metric-val" style="color:var(--gn);">$14,200.00</div>
+        </div>
+        <div class="ai-metric">
+          <div class="ai-metric-label">Reduction reason</div>
+          <div class="ai-metric-val" style="font-size:13px;">Out-of-network rate</div>
+        </div>
+      </div>
+      <div class="qa-summary">
+        <strong style="color:var(--t);">QA self-check summary:</strong> Claim appears valid. Member active, procedure covered, medical necessity confirmed per CMS guidelines. Amount reduced from $18,500 to $14,200 due to out-of-network rate differential — Mercy General is not in the PPO preferred network. Plan pays 80% of in-network equivalent ($17,750 × 80% = $14,200). Confidence 78% — below the 85% threshold because total amount exceeds $10,000 (mandatory review rule). No fraud signals detected. All 9 processing steps completed without errors.
+      </div>
+    </div>
+
+    <!-- PROCESSING LOG -->
+    <div class="card" style="margin-bottom:16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+        <div class="sec-title" style="margin-bottom:0;">Agent processing log</div>
+        <a href="10_logs.html" class="btn btn-sm">View full log →</a>
+      </div>
+      <div class="tl">
+        <div class="tl-item">
+          <div class="tl-line-wrap"><div class="tl-dot done">📥</div><div class="tl-connector done"></div></div>
+          <div class="tl-body">
+            <div class="tl-title">Step 1 — Intake &amp; parsing</div>
+            <div class="tl-meta">Apr 15, 10:23 AM · 0.8s</div>
+            <div class="tl-detail">Member: John Smith · ID: GHP-204811 · ICD: M17.11 · CPT: 27447 · Billed: $18,500 · Provider: Mercy General Hospital (NPI: 1234567890) · 3 documents received</div>
+          </div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-line-wrap"><div class="tl-dot done">📄</div><div class="tl-connector done"></div></div>
+          <div class="tl-body">
+            <div class="tl-title">Step 2 — Document validation</div>
+            <div class="tl-meta">Apr 15, 10:24 AM · 1.1s</div>
+            <div class="tl-detail">EOB complete ✓ · Surgical report complete ✓ · Pre-authorization letter valid ✓ (Auth #PA-2026-84412) · All documents legible · No missing fields</div>
+          </div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-line-wrap"><div class="tl-dot done">📋</div><div class="tl-connector done"></div></div>
+          <div class="tl-body">
+            <div class="tl-title">Step 3 — Policy &amp; eligibility validation</div>
+            <div class="tl-meta">Apr 15, 10:24 AM · 1.3s</div>
+            <div class="tl-detail">Member active since Jan 2019 ✓ · CPT 27447 covered under surgical benefit (Section 4.2) ✓ · Annual deductible met ($1,500) ✓ · Pre-auth confirmed ✓ · Out-of-pocket max not yet reached ✓</div>
+          </div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-line-wrap"><div class="tl-dot done">🩺</div><div class="tl-connector done"></div></div>
+          <div class="tl-body">
+            <div class="tl-title">Step 4 — Medical expert review</div>
+            <div class="tl-meta">Apr 15, 10:25 AM · 3.1s</div>
+            <div class="tl-detail">ICD M17.11 (primary osteoarthritis, right knee) is a clinically appropriate indication for CPT 27447 (total knee arthroplasty) per CMS LCD L33795 ✓ · Medical necessity confirmed ✓ · Age 54 — within expected demographic ✓ · No contraindications noted ✓</div>
+          </div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-line-wrap"><div class="tl-dot done">🛡️</div><div class="tl-connector done"></div></div>
+          <div class="tl-body">
+            <div class="tl-title">Step 5 — Fraud &amp; duplicate check</div>
+            <div class="tl-meta">Apr 15, 10:26 AM · 2.4s</div>
+            <div class="tl-detail">No duplicate claims in 24-month history ✓ · Mercy General Hospital — no fraud history in provider registry ✓ · Billed amount ($18,500) within expected range for CPT 27447 ($14k–$26k) ✓ · Member claim frequency normal ✓ · Fraud score: 4/100 (low)</div>
+          </div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-line-wrap"><div class="tl-dot warn">💰</div><div class="tl-connector done"></div></div>
+          <div class="tl-body">
+            <div class="tl-title">Step 6 — Amount calculation</div>
+            <div class="tl-meta">Apr 15, 10:27 AM · 1.8s</div>
+            <div class="tl-detail warn">Mercy General is out-of-network (not in BCR-GRP-8821 preferred PPO) · In-network equivalent rate for CPT 27447: $17,750 · Plan pays 80% of in-network rate · $17,750 × 0.80 = $14,200 · Deductible already met — no reduction · Co-pay: $0 (surgical benefit) · <strong style="color:var(--am);">Approved amount: $14,200</strong></div>
+          </div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-line-wrap"><div class="tl-dot done">✅</div><div class="tl-connector pending"></div></div>
+          <div class="tl-body">
+            <div class="tl-title">Step 7 — QA self-check</div>
+            <div class="tl-meta">Apr 15, 10:27 AM · 0.9s</div>
+            <div class="tl-detail">All 6 prior steps consistent ✓ · Amount calculation verified ✓ · Confidence score: 78% · Below 85% threshold — mandatory human review triggered by rule: "Amount &gt; $10,000 → human review" · Total processing time: 11.4s</div>
+          </div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-line-wrap"><div class="tl-dot pending">👤</div></div>
+          <div class="tl-body">
+            <div class="tl-title" style="color:var(--ac);">Step 8 — Awaiting your decision</div>
+            <div class="tl-meta" style="color:var(--t3);">Assigned to Sarah K. · Apr 15, 10:28 AM</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ADD CONTEXT & RERUN -->
+    <div class="rerun-box">
+      <div class="sec-title">Add context or documents &amp; rerun agent</div>
+      <p style="font-size:12px;color:var(--t2);margin-bottom:14px;">Upload additional documents or add notes. The agent will run the full 9-step process again with this new information included.</p>
+      <div class="fg">
+        <label>Additional notes for the agent</label>
+        <textarea rows="3" id="rerun-notes" placeholder="e.g. Member confirmed Mercy General was the only available in-network surgeon for this procedure. Referral letter attached."></textarea>
+      </div>
+      <div style="background:var(--s2);border:2px dashed var(--b2);border-radius:8px;padding:16px;text-align:center;cursor:pointer;margin-bottom:12px;" onmouseover="this.style.borderColor='var(--ac)'" onmouseout="this.style.borderColor='var(--b2)'">
+        <div style="font-size:13px;color:var(--t2);">📎 Upload additional documents <span style="color:var(--ac);">(PDF, JPG, PNG)</span></div>
+      </div>
+      <button class="btn btn-warn" style="width:100%;" onclick="showRerunConfirm()">🔄 Add context &amp; rerun agent</button>
+    </div>
+
+  </div>
+
+  <!-- RIGHT COLUMN -->
+  <div class="right-col">
+
+    <!-- DECISION PANEL -->
+    <div class="decision-panel">
+      <div class="sec-title">Make a decision</div>
+
+      <div class="decision-option selected-approve" id="opt-approve" onclick="selectDecision('approve')">
+        <div class="do-title" style="color:var(--gn);">✓ Approve — AI amount ($14,200)</div>
+        <div class="do-desc">Accept the AI recommendation</div>
+      </div>
+      <div class="decision-option" id="opt-modify" onclick="selectDecision('modify')">
+        <div class="do-title">✎ Approve — custom amount</div>
+        <div class="do-desc">Override the amount</div>
+      </div>
+      <div class="decision-option" id="opt-deny" onclick="selectDecision('deny')">
+        <div class="do-title" style="color:var(--rd);">✗ Deny claim</div>
+        <div class="do-desc">Reject with reason</div>
+      </div>
+
+      <!-- AMOUNT INPUT (shown for modify) -->
+      <div id="amount-field" style="display:none;margin-top:10px;">
+        <div class="fg"><label>Custom approved amount</label><input type="text" id="custom-amount" placeholder="e.g. $16,000.00"/></div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="fg">
+        <label>Decision notes <span style="color:var(--t3);">(included in claimant letter)</span></label>
+        <textarea rows="4" id="decision-notes">Claim approved at $14,200. Reduction from $18,500 because Mercy General Hospital is not in your PPO preferred network. Your plan covers 80% of the in-network equivalent rate ($17,750). Your deductible has been met so no further deduction applies.</textarea>
+      </div>
+
+      <button class="btn btn-success btn-lg" id="submit-btn" style="width:100%;margin-bottom:8px;" onclick="submitDecision()">✓ Confirm &amp; send to claimant</button>
+      <button class="btn btn-sm" style="width:100%;margin-bottom:8px;" onclick="location.href='12_supervisor.html'">↑ Escalate to supervisor</button>
+      <button class="btn btn-sm" style="width:100%;color:var(--t3);">Save draft</button>
+    </div>
+
+    <!-- CLAIM INFO -->
+    <div class="card" style="margin-bottom:12px;">
+      <div class="sec-label">Claim info</div>
+      <div class="info-row"><span class="info-key">Member</span><span class="info-val">John Smith</span></div>
+      <div class="info-row"><span class="info-key">Member ID</span><span class="info-val">GHP-204811</span></div>
+      <div class="info-row"><span class="info-key">Plan</span><span class="info-val">BCR-GRP-8821 PPO Gold</span></div>
+      <div class="info-row"><span class="info-key">Provider</span><span class="info-val">Mercy General Hospital</span></div>
+      <div class="info-row"><span class="info-key">Network status</span><span class="info-val" style="color:var(--am);">Out-of-network</span></div>
+      <div class="info-row"><span class="info-key">ICD-10</span><span class="info-val">M17.11</span></div>
+      <div class="info-row"><span class="info-key">CPT</span><span class="info-val">27447</span></div>
+      <div class="info-row"><span class="info-key">Service date</span><span class="info-val">Mar 20, 2026</span></div>
+      <div class="info-row"><span class="info-key">Billed</span><span class="info-val" style="font-weight:700;">$18,500.00</span></div>
+      <div class="info-row"><span class="info-key">AI recommended</span><span class="info-val" style="color:var(--gn);font-weight:700;">$14,200.00</span></div>
+    </div>
+
+    <!-- DOCUMENTS -->
+    <div class="card" style="margin-bottom:12px;">
+      <div class="sec-label">Documents</div>
+      <div style="display:flex;flex-direction:column;gap:7px;font-size:12px;">
+        <div style="display:flex;align-items:center;gap:8px;cursor:pointer;color:var(--ac);">📄 EOB_MercyGeneral_Mar2026.pdf</div>
+        <div style="display:flex;align-items:center;gap:8px;cursor:pointer;color:var(--ac);">📄 SurgicalReport_CPT27447.pdf</div>
+        <div style="display:flex;align-items:center;gap:8px;cursor:pointer;color:var(--ac);">📄 PreAuthorization_GHP204811.pdf</div>
+      </div>
+    </div>
+
+    <!-- MEMBER HISTORY -->
+    <div class="card">
+      <div class="sec-label">Member claim history</div>
+      <div style="display:flex;flex-direction:column;gap:6px;font-size:12px;">
+        <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--b);">
+          <div><div style="color:var(--t);">CPT 99213 — Office visit</div><div style="color:var(--t3);">Jan 2026</div></div>
+          <span class="tag tg" style="font-size:10px;">$220</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--b);">
+          <div><div style="color:var(--t);">CPT 73721 — Knee MRI</div><div style="color:var(--t3);">Oct 2025</div></div>
+          <span class="tag tg" style="font-size:10px;">$1,400</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:5px 0;">
+          <div><div style="color:var(--t);">CPT 20610 — Joint injection</div><div style="color:var(--t3);">Jul 2025</div></div>
+          <span class="tag tg" style="font-size:10px;">$380</span>
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--t3);margin-top:10px;">No fraud flags in history · 3 prior claims in 24 months</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- RERUN CONFIRM MODAL -->
+<div class="modal-overlay" id="rerun-modal">
+  <div class="modal">
+    <div class="modal-title">🔄 Confirm agent rerun</div>
+    <p style="font-size:13px;color:var(--t2);margin-bottom:16px;line-height:1.7;">The agent will process this claim again from the beginning using the original documents plus your new context. This typically takes 10–15 seconds. The current AI recommendation will be replaced.</p>
+    <div style="background:var(--s2);border-radius:8px;padding:11px;margin-bottom:16px;font-size:12px;color:var(--t2);">
+      <strong style="color:var(--t);">New context added:</strong> Member confirmed Mercy General was the only available in-network surgeon for this procedure.
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button class="btn" onclick="document.getElementById('rerun-modal').classList.remove('open')">Cancel</button>
+      <button class="btn btn-warn" onclick="startRerun()">🔄 Run agent again</button>
+    </div>
+  </div>
+</div>
+
+<!-- SUBMIT SUCCESS MODAL -->
+<div class="modal-overlay" id="submit-modal">
+  <div class="modal">
+    <div class="modal-title" style="color:var(--gn);">✓ Decision submitted</div>
+    <p style="font-size:13px;color:var(--t2);margin-bottom:16px;line-height:1.7;">Claim CLM-2026-08841 has been approved for <strong style="color:var(--gn);">$14,200.00</strong>. A decision letter has been automatically sent to John Smith at john.smith@email.com.</p>
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button class="btn" onclick="location.href='08_queue.html'">Back to queue</button>
+      <button class="btn btn-p" onclick="document.getElementById('submit-modal').classList.remove('open')">View next claim</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function selectDecision(type) {
+  document.querySelectorAll('.decision-option').forEach(o => {
+    o.classList.remove('selected-approve','selected-modify','selected-deny');
+  });
+  document.getElementById('opt-' + type).classList.add('selected-' + type);
+  document.getElementById('amount-field').style.display = type === 'modify' ? 'block' : 'none';
+  const btn = document.getElementById('submit-btn');
+  if (type === 'approve') {
+    btn.className = 'btn btn-success btn-lg';
+    btn.textContent = '✓ Approve $14,200 & send to claimant';
+  } else if (type === 'modify') {
+    btn.className = 'btn btn-p btn-lg';
+    btn.textContent = '✓ Approve custom amount & send';
+  } else {
+    btn.className = 'btn btn-danger btn-lg';
+    btn.textContent = '✗ Deny claim & send notice';
+  }
+}
+
+function submitDecision() {
+  document.getElementById('submit-modal').classList.add('open');
+}
+
+function showRerunConfirm() {
+  const notes = document.getElementById('rerun-notes').value;
+  if (notes.trim()) {
+    document.getElementById('rerun-modal').classList.add('open');
+  } else {
+    document.getElementById('rerun-modal').classList.add('open');
+  }
+}
+
+function startRerun() {
+  document.getElementById('rerun-modal').classList.remove('open');
+  const btn = document.querySelector('.rerun-box button');
+  btn.textContent = '⏳ Agent running... (step 3/9)';
+  btn.disabled = true;
+  setTimeout(() => {
+    btn.textContent = '✓ Rerun complete — scroll up to see updated recommendation';
+    btn.disabled = false;
+    btn.className = 'btn btn-success';
+  }, 2500);
+}
+</script>
+</body>
+</html>

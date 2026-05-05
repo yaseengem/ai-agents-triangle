@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Claim Review Queue — AgentIQ</title>
+<style>
+:root{--bg:#0D0F12;--s:#161A20;--s2:#1E2329;--s3:#252B33;--b:#2A3040;--b2:#353D4A;--t:#F0F2F5;--t2:#8B95A3;--t3:#545F6E;--ac:#4F8EF7;--acd:#1C2E4A;--gn:#34D399;--gnd:#0D2E22;--am:#FBBF24;--amd:#2D2210;--rd:#F87171;--rdd:#2D1010;--tl:#2DD4BF;--tld:#0D2D2A;--pu:#A78BFA;--pud:#1E1635;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;background:var(--bg);color:var(--t);font-size:14px;line-height:1.6;}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;height:56px;padding:0 40px;display:flex;align-items:center;justify-content:space-between;background:rgba(13,15,18,0.96);border-bottom:1px solid var(--b);}
+.logo{display:flex;align-items:center;gap:9px;text-decoration:none;}
+.logo-mark{width:30px;height:30px;background:var(--ac);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:15px;}
+.logo-text{font-size:15px;font-weight:700;color:var(--t);}
+.logo-text span{color:var(--ac);}
+.nav-links{display:flex;align-items:center;gap:28px;}
+.nav-links a{font-size:13px;color:var(--t2);text-decoration:none;transition:color .15s;}
+.nav-links a:hover,.nav-links a.active{color:var(--t);}
+.nav-right{display:flex;align-items:center;gap:8px;}
+.avatar{width:30px;height:30px;border-radius:50%;background:var(--acd);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--ac);}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;font-family:inherit;font-size:13px;font-weight:500;padding:8px 16px;border-radius:7px;cursor:pointer;border:1px solid var(--b2);background:var(--s2);color:var(--t);transition:all .15s;text-decoration:none;}
+.btn:hover{background:var(--s3);}
+.btn-p{background:var(--ac);border-color:var(--ac);color:#fff;}
+.btn-p:hover{background:#6b9ff8;}
+.btn-sm{font-size:12px;padding:6px 12px;}
+.tag{display:inline-flex;align-items:center;font-size:11px;font-weight:500;padding:3px 9px;border-radius:20px;}
+.tg{background:var(--gnd);color:var(--gn);}
+.tam{background:var(--amd);color:var(--am);}
+.tr{background:var(--rdd);color:var(--rd);}
+.tb{background:var(--acd);color:var(--ac);}
+.tt{background:var(--tld);color:var(--tl);}
+.tp{background:var(--pud);color:var(--pu);}
+input,select{font-family:inherit;font-size:13px;color:var(--t);background:var(--s2);border:1px solid var(--b2);border-radius:7px;padding:8px 12px;outline:none;transition:border-color .15s;}
+input:focus,select:focus{border-color:var(--ac);}
+input::placeholder{color:var(--t3);}
+select option{background:var(--s2);}
+/* LAYOUT */
+.shell{display:flex;padding-top:56px;min-height:100vh;}
+.sidebar{width:220px;flex-shrink:0;background:var(--s);border-right:1px solid var(--b);padding:20px 14px;position:sticky;top:56px;height:calc(100vh - 56px);overflow-y:auto;}
+.sidebar-label{font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;padding:0 8px;}
+.sidebar-section{margin-bottom:24px;}
+.sl{display:flex;align-items:center;gap:9px;font-size:13px;padding:8px 10px;border-radius:7px;color:var(--t2);cursor:pointer;margin-bottom:2px;text-decoration:none;transition:all .15s;}
+.sl:hover{background:var(--s2);color:var(--t);}
+.sl.active{background:var(--s2);color:var(--t);font-weight:500;}
+.sl .ico{font-size:15px;width:20px;text-align:center;}
+.sl .badge{margin-left:auto;background:var(--am);color:#000;font-size:10px;font-weight:700;padding:1px 6px;border-radius:20px;}
+.sl .badge-red{background:var(--rd);color:#fff;}
+.main{flex:1;min-width:0;}
+/* TOOLBAR */
+.toolbar{background:var(--s);border-bottom:1px solid var(--b);padding:14px 32px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+.toolbar-title{font-size:17px;font-weight:700;color:var(--t);}
+.toolbar-sub{font-size:12px;color:var(--t2);}
+/* STATS STRIP */
+.stats-strip{display:grid;grid-template-columns:repeat(5,1fr);gap:0;border-bottom:1px solid var(--b);}
+.stat-cell{padding:14px 20px;border-right:1px solid var(--b);}
+.stat-cell:last-child{border-right:none;}
+.stat-cell-label{font-size:11px;color:var(--t3);margin-bottom:4px;}
+.stat-cell-val{font-size:20px;font-weight:700;color:var(--t);}
+.stat-cell-sub{font-size:11px;color:var(--t3);margin-top:2px;}
+/* FILTER BAR */
+.filter-bar{padding:12px 32px;background:var(--s2);border-bottom:1px solid var(--b);display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.filter-chip{padding:5px 12px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--b2);background:var(--s);color:var(--t2);transition:all .15s;}
+.filter-chip:hover{background:var(--s3);color:var(--t);}
+.filter-chip.active{background:var(--acd);border-color:var(--ac);color:var(--ac);}
+/* TABLE */
+.table-wrap{padding:20px 32px;overflow-x:auto;}
+table{width:100%;border-collapse:collapse;min-width:900px;}
+thead th{font-size:11px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;padding:10px 12px;text-align:left;border-bottom:1px solid var(--b);white-space:nowrap;}
+tbody td{font-size:13px;color:var(--t);padding:13px 12px;border-bottom:1px solid var(--b);vertical-align:middle;}
+tbody tr:last-child td{border-bottom:none;}
+tbody tr:hover td{background:var(--s2);cursor:pointer;}
+tbody tr.urgent td{background:rgba(248,113,113,.04);}
+tbody tr.urgent:hover td{background:rgba(248,113,113,.08);}
+/* CONF BAR */
+.conf-bar{height:5px;border-radius:3px;background:var(--s3);overflow:hidden;margin-top:5px;width:80px;}
+.cf-g{height:100%;background:var(--gn);border-radius:3px;}
+.cf-m{height:100%;background:var(--am);border-radius:3px;}
+.cf-r{height:100%;background:var(--rd);border-radius:3px;}
+/* SLA */
+.sla-ok{color:var(--gn);font-size:12px;font-weight:500;}
+.sla-warn{color:var(--am);font-size:12px;font-weight:500;}
+.sla-crit{color:var(--rd);font-size:12px;font-weight:600;}
+/* EMPTY STATE */
+.empty{text-align:center;padding:60px;color:var(--t2);}
+/* PAGINATION */
+.pagination{display:flex;align-items:center;justify-content:space-between;padding:14px 32px;border-top:1px solid var(--b);}
+.page-info{font-size:12px;color:var(--t3);}
+.page-btns{display:flex;gap:6px;}
+.page-btn{width:32px;height:32px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;cursor:pointer;border:1px solid var(--b2);background:var(--s2);color:var(--t2);transition:all .15s;}
+.page-btn:hover{background:var(--s3);color:var(--t);}
+.page-btn.active{background:var(--ac);border-color:var(--ac);color:#fff;}
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="logo" href="01_homepage.html"><div class="logo-mark">🤖</div><span class="logo-text">Agent<span>IQ</span></span></a>
+  <div class="nav-links">
+    <a href="05_dashboard.html">My Agents</a>
+    <a href="08_queue.html" class="active">Review Queue</a>
+    <a href="10_logs.html">Run Logs</a>
+    <a href="11_rules.html">Rules</a>
+    <a href="12_supervisor.html">Supervisor</a>
+  </div>
+  <div class="nav-right">
+    <div class="avatar">SK</div>
+  </div>
+</nav>
+
+<div class="shell">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-label">Claims Agent</div>
+      <a class="sl" href="05_dashboard.html"><span class="ico">🏠</span> Dashboard</a>
+      <a class="sl active" href="08_queue.html"><span class="ico">📋</span> Review queue <span class="badge">7</span></a>
+      <a class="sl" href="09_review.html"><span class="ico">🔍</span> Claim review</a>
+      <a class="sl" href="10_logs.html"><span class="ico">🧾</span> Run logs</a>
+      <a class="sl" href="11_rules.html"><span class="ico">⚙️</span> Rules engine</a>
+      <a class="sl" href="12_supervisor.html"><span class="ico">📊</span> Supervisor view</a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">My assignments</div>
+      <a class="sl" href="09_review.html"><span class="ico">⚡</span> Assigned to me <span class="badge">4</span></a>
+      <a class="sl" href="#"><span class="ico">🚨</span> SLA at risk <span class="badge-red badge">2</span></a>
+      <a class="sl" href="#"><span class="ico">🔺</span> Escalated</a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">Quick filters</div>
+      <a class="sl" href="#"><span class="ico">💰</span> High value (&gt;$5k)</a>
+      <a class="sl" href="#"><span class="ico">📉</span> Low confidence</a>
+      <a class="sl" href="#"><span class="ico">🛡️</span> Fraud flagged</a>
+      <a class="sl" href="#"><span class="ico">❌</span> Pending denial</a>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- TOOLBAR -->
+    <div class="toolbar">
+      <div style="flex:1;">
+        <div class="toolbar-title">Claim review queue</div>
+        <div class="toolbar-sub">Claims Processing Agent &nbsp;&bull;&nbsp; BlueCross Regional Health</div>
+      </div>
+      <input type="text" placeholder="Search by claim ID, member name..." style="width:260px;"/>
+      <select style="width:150px;">
+        <option>Sort: Oldest first</option>
+        <option>Highest amount</option>
+        <option>Lowest confidence</option>
+        <option>SLA: Soonest</option>
+      </select>
+      <button class="btn btn-sm">Export CSV</button>
+    </div>
+
+    <!-- STATS STRIP -->
+    <div class="stats-strip">
+      <div class="stat-cell">
+        <div class="stat-cell-label">Pending review</div>
+        <div class="stat-cell-val" style="color:var(--am);">7</div>
+        <div class="stat-cell-sub">Awaiting decision</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-cell-label">SLA at risk</div>
+        <div class="stat-cell-val" style="color:var(--rd);">2</div>
+        <div class="stat-cell-sub">Due within 6h</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-cell-label">Assigned to me</div>
+        <div class="stat-cell-val">4</div>
+        <div class="stat-cell-sub">Sarah K.</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-cell-label">Reviewed today</div>
+        <div class="stat-cell-val" style="color:var(--gn);">12</div>
+        <div class="stat-cell-sub">Avg 8 min/claim</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-cell-label">Total value pending</div>
+        <div class="stat-cell-val">$84.2k</div>
+        <div class="stat-cell-sub">Across 7 claims</div>
+      </div>
+    </div>
+
+    <!-- FILTER CHIPS -->
+    <div class="filter-bar">
+      <span style="font-size:12px;color:var(--t3);">Filter:</span>
+      <div class="filter-chip active" onclick="filterQueue('all',this)">All (7)</div>
+      <div class="filter-chip" onclick="filterQueue('mine',this)">Assigned to me (4)</div>
+      <div class="filter-chip" onclick="filterQueue('sla',this)">SLA at risk (2)</div>
+      <div class="filter-chip" onclick="filterQueue('highval',this)">High value &gt;$5k (3)</div>
+      <div class="filter-chip" onclick="filterQueue('lowconf',this)">Low confidence (4)</div>
+      <div class="filter-chip" onclick="filterQueue('fraud',this)">Fraud flag (1)</div>
+      <div class="filter-chip" onclick="filterQueue('denial',this)">Pending denial (1)</div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="table-wrap">
+      <table id="queue-table">
+        <thead>
+          <tr>
+            <th>Claim ID</th>
+            <th>Member</th>
+            <th>Procedure</th>
+            <th>Billed</th>
+            <th>AI Recommended</th>
+            <th>Confidence</th>
+            <th>Reason for review</th>
+            <th>Assigned to</th>
+            <th>SLA remaining</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+
+          <!-- ROW 1 — SLA CRITICAL -->
+          <tr class="urgent" data-tags="mine sla lowconf" onclick="location.href='09_review.html'">
+            <td><span style="color:var(--ac);font-weight:600;">CLM-08841</span></td>
+            <td>John Smith<br/><span style="font-size:11px;color:var(--t3);">GHP-204811</span></td>
+            <td>CPT 27447<br/><span style="font-size:11px;color:var(--t3);">Knee replacement</span></td>
+            <td style="font-weight:600;">$18,500</td>
+            <td><span style="color:var(--am);font-weight:600;">$14,200</span><br/><span style="font-size:11px;color:var(--t3);">Partial — OON rate</span></td>
+            <td>
+              <span style="color:var(--am);font-weight:600;">78%</span>
+              <div class="conf-bar"><div class="cf-m" style="width:78%;"></div></div>
+            </td>
+            <td><span class="tag tam">Low confidence</span><br/><span class="tag" style="background:var(--rdd);color:var(--rd);margin-top:4px;">High amount</span></td>
+            <td><span style="font-size:12px;">Sarah K.</span></td>
+            <td><span class="sla-crit">⚠️ 5h left</span></td>
+            <td><button class="btn btn-sm btn-p" onclick="event.stopPropagation();location.href='09_review.html'">Review</button></td>
+          </tr>
+
+          <!-- ROW 2 — SLA WARNING -->
+          <tr data-tags="sla highval lowconf" onclick="location.href='09_review.html'">
+            <td><span style="color:var(--ac);font-weight:600;">CLM-08799</span></td>
+            <td>Maria Lopez<br/><span style="font-size:11px;color:var(--t3);">GHP-198432</span></td>
+            <td>CPT 99213<br/><span style="font-size:11px;color:var(--t3);">Office visit</span></td>
+            <td style="font-weight:600;">$4,800</td>
+            <td><span style="color:var(--gn);font-weight:600;">$4,800</span><br/><span style="font-size:11px;color:var(--t3);">Full approval</span></td>
+            <td>
+              <span style="color:var(--am);font-weight:600;">82%</span>
+              <div class="conf-bar"><div class="cf-m" style="width:82%;"></div></div>
+            </td>
+            <td><span class="tag tam">Low confidence</span></td>
+            <td><span style="font-size:12px;">Sarah K.</span></td>
+            <td><span class="sla-warn">⚠️ 9h left</span></td>
+            <td><button class="btn btn-sm btn-p" onclick="event.stopPropagation();location.href='09_review.html'">Review</button></td>
+          </tr>
+
+          <!-- ROW 3 — FRAUD FLAG + DENIAL -->
+          <tr data-tags="mine fraud denial lowconf" onclick="location.href='09_review.html'">
+            <td><span style="color:var(--ac);font-weight:600;">CLM-08751</span></td>
+            <td>David Chen<br/><span style="font-size:11px;color:var(--t3);">GHP-221104</span></td>
+            <td>CPT 70553<br/><span style="font-size:11px;color:var(--t3);">Brain MRI</span></td>
+            <td style="font-weight:600;">$6,200</td>
+            <td><span style="color:var(--rd);font-weight:600;">Deny</span><br/><span style="font-size:11px;color:var(--t3);">No pre-auth found</span></td>
+            <td>
+              <span style="color:var(--gn);font-weight:600;">91%</span>
+              <div class="conf-bar"><div class="cf-g" style="width:91%;"></div></div>
+            </td>
+            <td><span class="tag tr">Pending denial</span></td>
+            <td><span style="font-size:12px;">Marcus T.</span></td>
+            <td><span class="sla-ok">18h left</span></td>
+            <td><button class="btn btn-sm btn-p" onclick="event.stopPropagation();location.href='09_review.html'">Review</button></td>
+          </tr>
+
+          <!-- ROW 4 -->
+          <tr data-tags="mine lowconf" onclick="location.href='09_review.html'">
+            <td><span style="color:var(--ac);font-weight:600;">CLM-08732</span></td>
+            <td>Emily Ross<br/><span style="font-size:11px;color:var(--t3);">GHP-200019</span></td>
+            <td>CPT 43239<br/><span style="font-size:11px;color:var(--t3);">Upper GI endoscopy</span></td>
+            <td style="font-weight:600;">$3,100</td>
+            <td><span style="color:var(--gn);font-weight:600;">$3,100</span><br/><span style="font-size:11px;color:var(--t3);">Full approval</span></td>
+            <td>
+              <span style="color:var(--am);font-weight:600;">76%</span>
+              <div class="conf-bar"><div class="cf-m" style="width:76%;"></div></div>
+            </td>
+            <td><span class="tag tam">Low confidence</span></td>
+            <td><span style="font-size:12px;">Sarah K.</span></td>
+            <td><span class="sla-ok">20h left</span></td>
+            <td><button class="btn btn-sm btn-p" onclick="event.stopPropagation();location.href='09_review.html'">Review</button></td>
+          </tr>
+
+          <!-- ROW 5 — HIGH VALUE -->
+          <tr data-tags="highval" onclick="location.href='09_review.html'">
+            <td><span style="color:var(--ac);font-weight:600;">CLM-08710</span></td>
+            <td>Robert Kim<br/><span style="font-size:11px;color:var(--t3);">GHP-177203</span></td>
+            <td>CPT 27130<br/><span style="font-size:11px;color:var(--t3);">Hip replacement</span></td>
+            <td style="font-weight:600;">$22,400</td>
+            <td><span style="color:var(--gn);font-weight:600;">$22,400</span><br/><span style="font-size:11px;color:var(--t3);">Full approval</span></td>
+            <td>
+              <span style="color:var(--gn);font-weight:600;">88%</span>
+              <div class="conf-bar"><div class="cf-g" style="width:88%;"></div></div>
+            </td>
+            <td><span class="tag tb">High amount</span></td>
+            <td><span style="font-size:12px;">Marcus T.</span></td>
+            <td><span class="sla-ok">22h left</span></td>
+            <td><button class="btn btn-sm btn-p" onclick="event.stopPropagation();location.href='09_review.html'">Review</button></td>
+          </tr>
+
+          <!-- ROW 6 -->
+          <tr data-tags="mine" onclick="location.href='09_review.html'">
+            <td><span style="color:var(--ac);font-weight:600;">CLM-08698</span></td>
+            <td>Lisa Chen<br/><span style="font-size:11px;color:var(--t3);">GHP-209812</span></td>
+            <td>CPT 90837<br/><span style="font-size:11px;color:var(--t3);">Psychotherapy 60min</span></td>
+            <td style="font-weight:600;">$2,400</td>
+            <td><span style="color:var(--gn);font-weight:600;">$2,400</span><br/><span style="font-size:11px;color:var(--t3);">Full approval</span></td>
+            <td>
+              <span style="color:var(--gn);font-weight:600;">89%</span>
+              <div class="conf-bar"><div class="cf-g" style="width:89%;"></div></div>
+            </td>
+            <td><span class="tag tb">High amount</span></td>
+            <td><span style="font-size:12px;">Sarah K.</span></td>
+            <td><span class="sla-ok">23h left</span></td>
+            <td><button class="btn btn-sm btn-p" onclick="event.stopPropagation();location.href='09_review.html'">Review</button></td>
+          </tr>
+
+          <!-- ROW 7 — HIGH VALUE -->
+          <tr data-tags="highval lowconf" onclick="location.href='09_review.html'">
+            <td><span style="color:var(--ac);font-weight:600;">CLM-08681</span></td>
+            <td>James Moore<br/><span style="font-size:11px;color:var(--t3);">GHP-188340</span></td>
+            <td>CPT 22612<br/><span style="font-size:11px;color:var(--t3);">Spinal fusion</span></td>
+            <td style="font-weight:600;">$38,200</td>
+            <td><span style="color:var(--am);font-weight:600;">$29,800</span><br/><span style="font-size:11px;color:var(--t3);">Partial — OON rate</span></td>
+            <td>
+              <span style="color:var(--am);font-weight:600;">81%</span>
+              <div class="conf-bar"><div class="cf-m" style="width:81%;"></div></div>
+            </td>
+            <td><span class="tag tam">Low confidence</span><br/><span class="tag tb" style="margin-top:4px;">High amount</span></td>
+            <td><span style="font-size:12px;">Unassigned</span></td>
+            <td><span class="sla-ok">24h left</span></td>
+            <td>
+              <div style="display:flex;gap:6px;">
+                <button class="btn btn-sm" onclick="event.stopPropagation()">Assign me</button>
+                <button class="btn btn-sm btn-p" onclick="event.stopPropagation();location.href='09_review.html'">Review</button>
+              </div>
+            </td>
+          </tr>
+
+        </tbody>
+      </table>
+    </div>
+
+    <!-- PAGINATION -->
+    <div class="pagination">
+      <div class="page-info">Showing 7 of 7 claims</div>
+      <div class="page-btns">
+        <div class="page-btn" style="opacity:.4;">&larr;</div>
+        <div class="page-btn active">1</div>
+        <div class="page-btn" style="opacity:.4;">&rarr;</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+function filterQueue(type, el) {
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  const rows = document.querySelectorAll('#queue-table tbody tr');
+  let visible = 0;
+  rows.forEach(row => {
+    const tags = row.getAttribute('data-tags') || '';
+    const show = type === 'all' || tags.includes(type);
+    row.style.display = show ? '' : 'none';
+    if (show) visible++;
+  });
+  document.querySelector('.page-info').textContent = `Showing ${visible} of 7 claims`;
+}
+</script>
+</body>
+</html>

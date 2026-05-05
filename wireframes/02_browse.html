@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Browse Agents — AgentIQ</title>
+<style>
+:root{
+  --bg:#0D0F12;--s:#161A20;--s2:#1E2329;--s3:#252B33;
+  --b:#2A3040;--b2:#353D4A;--t:#F0F2F5;--t2:#8B95A3;--t3:#545F6E;
+  --ac:#4F8EF7;--acd:#1C2E4A;--gn:#34D399;--gnd:#0D2E22;
+  --am:#FBBF24;--amd:#2D2210;--rd:#F87171;--rdd:#2D1010;
+  --tl:#2DD4BF;--tld:#0D2D2A;--pu:#A78BFA;--pud:#1E1635;
+  --co:#FB923C;--cod:#2D1A0D;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;background:var(--bg);color:var(--t);font-size:14px;line-height:1.6;}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;height:56px;padding:0 40px;display:flex;align-items:center;justify-content:space-between;background:rgba(13,15,18,0.96);border-bottom:1px solid var(--b);}
+.logo{display:flex;align-items:center;gap:9px;cursor:pointer;text-decoration:none;}
+.logo-mark{width:30px;height:30px;background:var(--ac);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:15px;}
+.logo-text{font-size:15px;font-weight:700;color:var(--t);}
+.logo-text span{color:var(--ac);}
+.nav-links{display:flex;align-items:center;gap:28px;}
+.nav-links a{font-size:13px;color:var(--t2);cursor:pointer;text-decoration:none;transition:color .15s;}
+.nav-links a:hover,.nav-links a.active{color:var(--t);}
+.nav-right{display:flex;align-items:center;gap:8px;}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;font-family:inherit;font-size:13px;font-weight:500;padding:8px 16px;border-radius:7px;cursor:pointer;border:1px solid var(--b2);background:var(--s2);color:var(--t);transition:all .15s;text-decoration:none;}
+.btn:hover{background:var(--s3);}
+.btn-p{background:var(--ac);border-color:var(--ac);color:#fff;}
+.btn-p:hover{background:#6b9ff8;}
+.btn-sm{font-size:12px;padding:6px 13px;}
+.tag{display:inline-flex;align-items:center;font-size:11px;font-weight:500;padding:3px 9px;border-radius:20px;}
+.tb{background:var(--acd);color:var(--ac);}
+.tg{background:var(--gnd);color:var(--gn);}
+.tam{background:var(--amd);color:var(--am);}
+.tr{background:var(--rdd);color:var(--rd);}
+.tt{background:var(--tld);color:var(--tl);}
+.tp{background:var(--pud);color:var(--pu);}
+.tco{background:var(--cod);color:var(--co);}
+.tgr{background:var(--s3);color:var(--t2);}
+
+/* SEARCH BAR */
+.search-bar{background:var(--s);border-bottom:1px solid var(--b);padding:14px 40px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;position:sticky;top:56px;z-index:90;}
+.search-input-wrap{position:relative;flex:1;max-width:460px;}
+.search-input-wrap input{width:100%;padding-left:36px;}
+.search-icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--t3);font-size:15px;}
+input,select{font-family:inherit;font-size:13px;color:var(--t);background:var(--s2);border:1px solid var(--b2);border-radius:7px;padding:8px 12px;outline:none;transition:border-color .15s;}
+input:focus,select:focus{border-color:var(--ac);}
+input::placeholder{color:var(--t3);}
+select option{background:var(--s2);}
+select{cursor:pointer;}
+.result-count{font-size:13px;color:var(--t2);margin-left:auto;white-space:nowrap;}
+.result-count strong{color:var(--t);}
+
+/* LAYOUT */
+.page-body{display:flex;max-width:1200px;margin:0 auto;padding:24px 40px;gap:24px;padding-top:24px;}
+
+/* SIDEBAR */
+.sidebar{width:210px;flex-shrink:0;}
+.filter-card{background:var(--s);border:1px solid var(--b);border-radius:10px;padding:16px;position:sticky;top:120px;}
+.filter-section{margin-bottom:18px;}
+.filter-section:last-child{margin-bottom:0;}
+.filter-label{font-size:11px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px;}
+.filter-divider{height:1px;background:var(--b);margin:16px 0;}
+.check-item{display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:7px;}
+.check-item input[type=checkbox],.check-item input[type=radio]{width:14px;height:14px;accent-color:var(--ac);cursor:pointer;flex-shrink:0;}
+.check-item label{font-size:13px;color:var(--t2);cursor:pointer;display:flex;align-items:center;justify-content:space-between;width:100%;}
+.check-item label.active-filter{color:var(--ac);font-weight:500;}
+.filter-count{font-size:11px;color:var(--t3);}
+.clear-btn{font-size:12px;color:var(--ac);cursor:pointer;background:none;border:none;font-family:inherit;padding:0;margin-top:4px;}
+.clear-btn:hover{text-decoration:underline;}
+
+/* AGENT LIST */
+.agent-list{flex:1;min-width:0;}
+.list-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.sort-select{font-size:12px;padding:6px 10px;width:auto;}
+
+/* INDUSTRY CHIPS */
+.ind-chips{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:16px;}
+.ind-chip{padding:6px 14px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--b2);background:var(--s2);color:var(--t2);transition:all .15s;}
+.ind-chip:hover{border-color:var(--b2);background:var(--s3);color:var(--t);}
+.ind-chip.active{background:var(--acd);border-color:var(--ac);color:var(--ac);}
+.ind-chip.hc.active{background:var(--gnd);border-color:var(--gn);color:var(--gn);}
+.ind-chip.re.active{background:var(--amd);border-color:var(--am);color:var(--am);}
+.ind-chip.bk.active{background:var(--pud);border-color:var(--pu);color:var(--pu);}
+.ind-chip.lg.active{background:var(--tld);border-color:var(--tl);color:var(--tl);}
+
+/* AGENT CARDS */
+.agent-cards{display:flex;flex-direction:column;gap:13px;}
+.agent-card{background:var(--s);border:1px solid var(--b);border-radius:13px;padding:20px;cursor:pointer;transition:all .2s;}
+.agent-card:hover{border-color:var(--b2);transform:translateY(-2px);}
+.agent-card.featured{border:2px solid var(--ac);position:relative;}
+.featured-badge{position:absolute;top:-1px;left:18px;background:var(--ac);color:#fff;font-size:10px;font-weight:700;padding:2px 10px;border-radius:0 0 6px 6px;letter-spacing:.05em;}
+.card-inner{display:flex;gap:16px;align-items:flex-start;}
+.card-icon{width:50px;height:50px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;}
+.card-body{flex:1;min-width:0;}
+.card-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px;gap:12px;}
+.card-title{font-size:15px;font-weight:600;color:var(--t);margin-bottom:3px;}
+.card-by{font-size:12px;color:var(--t3);}
+.card-price{text-align:right;flex-shrink:0;}
+.price-val{font-size:15px;font-weight:700;color:var(--gn);}
+.price-trial{font-size:11px;color:var(--t3);margin-top:2px;}
+.card-desc{font-size:13px;color:var(--t2);line-height:1.65;margin-bottom:12px;}
+.card-footer{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;}
+.card-tags{display:flex;gap:5px;flex-wrap:wrap;}
+.card-actions{display:flex;gap:8px;align-items:center;}
+.rating{font-size:12px;color:var(--t3);}
+.star{color:var(--am);}
+
+/* PAGINATION */
+.pagination{display:flex;align-items:center;gap:6px;justify-content:center;margin-top:28px;}
+.page-btn{width:34px;height:34px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;cursor:pointer;border:1px solid var(--b2);background:var(--s2);color:var(--t2);transition:all .15s;}
+.page-btn:hover{background:var(--s3);color:var(--t);}
+.page-btn.active{background:var(--ac);border-color:var(--ac);color:#fff;}
+
+/* EMPTY STATE */
+.no-agents{text-align:center;padding:60px 20px;color:var(--t2);}
+.no-agents .icon{font-size:40px;margin-bottom:14px;}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a class="logo" href="01_homepage.html">
+    <div class="logo-mark">🤖</div>
+    <span class="logo-text">Agent<span>IQ</span></span>
+  </a>
+  <div class="nav-links">
+    <a href="01_homepage.html">Home</a>
+    <a href="02_browse.html" class="active">Browse Agents</a>
+    <a href="05_dashboard.html">My Agents</a>
+    <a href="#">Pricing</a>
+    <a href="#">Docs</a>
+  </div>
+  <div class="nav-right">
+    <button class="btn btn-sm">Sign in</button>
+    <button class="btn btn-sm btn-p">Get started</button>
+  </div>
+</nav>
+
+<!-- SEARCH BAR -->
+<div class="search-bar">
+  <div class="search-input-wrap">
+    <span class="search-icon">🔍</span>
+    <input type="text" id="search-input" placeholder="Search agents — e.g. claims processing, underwriting, fraud detection..." oninput="filterAgents()"/>
+  </div>
+  <select id="sort-select" onchange="filterAgents()" style="width:160px;">
+    <option value="popular">Sort: Most Popular</option>
+    <option value="newest">Newest First</option>
+    <option value="rating">Highest Rated</option>
+    <option value="price-low">Price: Low to High</option>
+    <option value="price-high">Price: High to Low</option>
+  </select>
+  <span class="result-count" id="result-count">Showing <strong>8</strong> agents</span>
+</div>
+
+<div class="page-body">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="filter-card">
+
+      <div class="filter-section">
+        <div class="filter-label">Industry</div>
+        <div class="check-item"><input type="checkbox" id="f-ins" checked onchange="filterAgents()"/><label for="f-ins" class="active-filter">Insurance <span class="filter-count">48</span></label></div>
+        <div class="check-item"><input type="checkbox" id="f-hc" onchange="filterAgents()"/><label for="f-hc">Healthcare <span class="filter-count">32</span></label></div>
+        <div class="check-item"><input type="checkbox" id="f-re" onchange="filterAgents()"/><label for="f-re">Real Estate <span class="filter-count">24</span></label></div>
+        <div class="check-item"><input type="checkbox" id="f-bk" onchange="filterAgents()"/><label for="f-bk">Banking <span class="filter-count">36</span></label></div>
+        <div class="check-item"><input type="checkbox" id="f-lg" onchange="filterAgents()"/><label for="f-lg">Legal <span class="filter-count">18</span></label></div>
+        <div class="check-item"><input type="checkbox" id="f-hr" onchange="filterAgents()"/><label for="f-hr">HR &amp; Workforce <span class="filter-count">22</span></label></div>
+      </div>
+
+      <div class="filter-divider"></div>
+
+      <div class="filter-section">
+        <div class="filter-label">Category</div>
+        <div class="check-item"><input type="checkbox" id="c-claims" checked onchange="filterAgents()"/><label for="c-claims">Claims Processing</label></div>
+        <div class="check-item"><input type="checkbox" id="c-uw" onchange="filterAgents()"/><label for="c-uw">Underwriting</label></div>
+        <div class="check-item"><input type="checkbox" id="c-fraud" onchange="filterAgents()"/><label for="c-fraud">Fraud Detection</label></div>
+        <div class="check-item"><input type="checkbox" id="c-policy" onchange="filterAgents()"/><label for="c-policy">Policy Review</label></div>
+        <div class="check-item"><input type="checkbox" id="c-loan" onchange="filterAgents()"/><label for="c-loan">Loan Onboarding</label></div>
+        <div class="check-item"><input type="checkbox" id="c-kyc" onchange="filterAgents()"/><label for="c-kyc">KYC / AML</label></div>
+      </div>
+
+      <div class="filter-divider"></div>
+
+      <div class="filter-section">
+        <div class="filter-label">Price</div>
+        <div class="check-item"><input type="radio" name="price" id="p-any" value="any" checked onchange="filterAgents()"/><label for="p-any">Any price</label></div>
+        <div class="check-item"><input type="radio" name="price" id="p-free" value="free" onchange="filterAgents()"/><label for="p-free">Free trial available</label></div>
+        <div class="check-item"><input type="radio" name="price" id="p-low" value="low" onchange="filterAgents()"/><label for="p-low">Under $100/mo</label></div>
+        <div class="check-item"><input type="radio" name="price" id="p-mid" value="mid" onchange="filterAgents()"/><label for="p-mid">$100 – $250/mo</label></div>
+        <div class="check-item"><input type="radio" name="price" id="p-high" value="high" onchange="filterAgents()"/><label for="p-high">$250+/mo</label></div>
+      </div>
+
+      <div class="filter-divider"></div>
+
+      <div class="filter-section">
+        <div class="filter-label">Rating</div>
+        <div class="check-item"><input type="radio" name="rating" id="r-any" value="0" checked onchange="filterAgents()"/><label for="r-any">Any rating</label></div>
+        <div class="check-item"><input type="radio" name="rating" id="r-4" value="4" onchange="filterAgents()"/><label for="r-4">4&#9733; &amp; above</label></div>
+        <div class="check-item"><input type="radio" name="rating" id="r-45" value="4.5" onchange="filterAgents()"/><label for="r-45">4.5&#9733; &amp; above</label></div>
+      </div>
+
+      <div class="filter-divider"></div>
+
+      <div class="filter-section">
+        <div class="filter-label">Compliance</div>
+        <div class="check-item"><input type="checkbox" id="comp-hipaa" onchange="filterAgents()"/><label for="comp-hipaa">HIPAA</label></div>
+        <div class="check-item"><input type="checkbox" id="comp-soc2" onchange="filterAgents()"/><label for="comp-soc2">SOC 2</label></div>
+        <div class="check-item"><input type="checkbox" id="comp-hitl" onchange="filterAgents()"/><label for="comp-hitl">Human-in-loop</label></div>
+      </div>
+
+      <button class="clear-btn" onclick="clearFilters()">Clear all filters</button>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="agent-list">
+
+    <!-- INDUSTRY CHIPS -->
+    <div class="ind-chips">
+      <div class="ind-chip active" onclick="toggleChip(this,'all')">All industries</div>
+      <div class="ind-chip ins" onclick="toggleChip(this,'insurance')">🏥 Insurance</div>
+      <div class="ind-chip hc" onclick="toggleChip(this,'healthcare')">🩺 Healthcare</div>
+      <div class="ind-chip re" onclick="toggleChip(this,'realestate')">🏠 Real Estate</div>
+      <div class="ind-chip bk" onclick="toggleChip(this,'banking')">🏦 Banking</div>
+      <div class="ind-chip lg" onclick="toggleChip(this,'legal')">⚖️ Legal</div>
+    </div>
+
+    <div class="list-header">
+      <p id="list-label" style="font-size:13px;color:var(--t2);">Showing <strong style="color:var(--t);">8</strong> agents</p>
+    </div>
+
+    <div class="agent-cards" id="agent-cards">
+
+      <!-- AGENT 1 - FEATURED -->
+      <div class="agent-card featured" data-industry="insurance" data-category="claims" data-price="199" data-rating="4.9" data-trial="true" onclick="location.href='03_agent_detail.html'">
+        <div class="featured-badge">FEATURED</div>
+        <div class="card-inner" style="margin-top:8px;">
+          <div class="card-icon" style="background:var(--acd);">🔍</div>
+          <div class="card-body">
+            <div class="card-top">
+              <div>
+                <div class="card-title">Claims Processing Agent</div>
+                <div class="card-by">by InsureTech Labs &bull; <span class="star">&#9733;</span> 4.9 &bull; 340 deployments</div>
+              </div>
+              <div class="card-price">
+                <div class="price-val">$199/mo</div>
+                <div class="price-trial">14-day free trial</div>
+              </div>
+            </div>
+            <p class="card-desc">End-to-end health insurance claim intake, document validation, medical expert review, fraud &amp; duplicate detection, automated adjudication and human-in-the-loop approval. Full AI transparency and audit trail on every claim.</p>
+            <div class="card-footer">
+              <div class="card-tags">
+                <span class="tag tb">Claims Processing</span>
+                <span class="tag tb">Health Insurance</span>
+                <span class="tag tg">HIPAA</span>
+                <span class="tag tt">Human-in-loop</span>
+                <span class="tag tg">SOC 2</span>
+              </div>
+              <div class="card-actions">
+                <button class="btn btn-sm btn-p" onclick="event.stopPropagation();location.href='03_agent_detail.html'">View agent &rarr;</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AGENT 2 -->
+      <div class="agent-card" data-industry="insurance" data-category="underwriting" data-price="149" data-rating="4.7" data-trial="true">
+        <div class="card-inner">
+          <div class="card-icon" style="background:var(--gnd);">📋</div>
+          <div class="card-body">
+            <div class="card-top">
+              <div>
+                <div class="card-title">Group Underwriting Agent</div>
+                <div class="card-by">by RiskAI Corp &bull; <span class="star">&#9733;</span> 4.7 &bull; 210 deployments</div>
+              </div>
+              <div class="card-price">
+                <div class="price-val">$149/mo</div>
+                <div class="price-trial">14-day free trial</div>
+              </div>
+            </div>
+            <p class="card-desc">Automated risk scoring, member eligibility review and premium calculation for group health insurance plans. Integrates with EPIC, Facets and TriZetto. Produces actuarial-grade risk reports.</p>
+            <div class="card-footer">
+              <div class="card-tags"><span class="tag tg">Underwriting</span><span class="tag tb">Health Insurance</span><span class="tag tg">HIPAA</span></div>
+              <div class="card-actions"><span class="rating"><span class="star">&#9733;</span> 4.7</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AGENT 3 -->
+      <div class="agent-card" data-industry="insurance" data-category="fraud" data-price="129" data-rating="4.8" data-trial="true">
+        <div class="card-inner">
+          <div class="card-icon" style="background:var(--rdd);">🛡️</div>
+          <div class="card-body">
+            <div class="card-top">
+              <div>
+                <div class="card-title">Fraud Detection Agent</div>
+                <div class="card-by">by SecureAI &bull; <span class="star">&#9733;</span> 4.8 &bull; 290 deployments</div>
+              </div>
+              <div class="card-price">
+                <div class="price-val">$129/mo</div>
+                <div class="price-trial">14-day free trial</div>
+              </div>
+            </div>
+            <p class="card-desc">Real-time duplicate claim detection, provider fraud pattern analysis and anomaly scoring across your entire claims portfolio. Flags suspicious patterns before adjudication.</p>
+            <div class="card-footer">
+              <div class="card-tags"><span class="tag tr">Fraud Detection</span><span class="tag tb">Insurance</span><span class="tag tg">SOC 2</span></div>
+              <div class="card-actions"><span class="rating"><span class="star">&#9733;</span> 4.8</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AGENT 4 -->
+      <div class="agent-card" data-industry="insurance" data-category="policy" data-price="89" data-rating="4.5" data-trial="true">
+        <div class="card-inner">
+          <div class="card-icon" style="background:var(--pud);">📜</div>
+          <div class="card-body">
+            <div class="card-top">
+              <div>
+                <div class="card-title">Policy Review Agent</div>
+                <div class="card-by">by PolicyAI &bull; <span class="star">&#9733;</span> 4.5 &bull; 140 deployments</div>
+              </div>
+              <div class="card-price">
+                <div class="price-val">$89/mo</div>
+                <div class="price-trial">14-day free trial</div>
+              </div>
+            </div>
+            <p class="card-desc">Automatically reviews insurance policy documents for gaps, exclusions, compliance issues and renewal triggers. Generates a structured summary for underwriters.</p>
+            <div class="card-footer">
+              <div class="card-tags"><span class="tag tp">Policy Review</span><span class="tag tb">Insurance</span><span class="tag tg">HIPAA</span></div>
+              <div class="card-actions"><span class="rating"><span class="star">&#9733;</span> 4.5</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AGENT 5 - HEALTHCARE -->
+      <div class="agent-card" data-industry="healthcare" data-category="claims" data-price="179" data-rating="4.6" data-trial="true">
+        <div class="card-inner">
+          <div class="card-icon" style="background:var(--gnd);">🩺</div>
+          <div class="card-body">
+            <div class="card-top">
+              <div>
+                <div class="card-title">Prior Authorization Agent</div>
+                <div class="card-by">by ClinicalAI &bull; <span class="star">&#9733;</span> 4.6 &bull; 190 deployments</div>
+              </div>
+              <div class="card-price">
+                <div class="price-val">$179/mo</div>
+                <div class="price-trial">14-day free trial</div>
+              </div>
+            </div>
+            <p class="card-desc">Automates prior authorization requests, clinical criteria checks and payer-specific rule validation. Reduces approval time from days to minutes.</p>
+            <div class="card-footer">
+              <div class="card-tags"><span class="tag tg">Prior Auth</span><span class="tag tg">Healthcare</span><span class="tag tg">HIPAA</span><span class="tag tt">Human-in-loop</span></div>
+              <div class="card-actions"><span class="rating"><span class="star">&#9733;</span> 4.6</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AGENT 6 - REAL ESTATE -->
+      <div class="agent-card" data-industry="realestate" data-category="loan" data-price="179" data-rating="4.8" data-trial="true">
+        <div class="card-inner">
+          <div class="card-icon" style="background:var(--amd);">🏠</div>
+          <div class="card-body">
+            <div class="card-top">
+              <div>
+                <div class="card-title">Loan Onboarding Agent</div>
+                <div class="card-by">by PropFlow AI &bull; <span class="star">&#9733;</span> 4.8 &bull; 180 deployments</div>
+              </div>
+              <div class="card-price">
+                <div class="price-val">$179/mo</div>
+                <div class="price-trial">14-day free trial</div>
+              </div>
+            </div>
+            <p class="card-desc">Automates real estate loan application intake, document verification, title checks and HMDA compliance screening. Integrates with Encompass and Blend.</p>
+            <div class="card-footer">
+              <div class="card-tags"><span class="tag tam">Loan Onboarding</span><span class="tag tam">Real Estate</span><span class="tag tg">HMDA</span></div>
+              <div class="card-actions"><span class="rating"><span class="star">&#9733;</span> 4.8</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AGENT 7 - BANKING -->
+      <div class="agent-card" data-industry="banking" data-category="kyc" data-price="249" data-rating="4.9" data-trial="false">
+        <div class="card-inner">
+          <div class="card-icon" style="background:var(--pud);">🏦</div>
+          <div class="card-body">
+            <div class="card-top">
+              <div>
+                <div class="card-title">KYC / AML Screening Agent</div>
+                <div class="card-by">by ComplianceIQ &bull; <span class="star">&#9733;</span> 4.9 &bull; 260 deployments</div>
+              </div>
+              <div class="card-price">
+                <div class="price-val">$249/mo</div>
+                <div class="price-trial">Enterprise pricing available</div>
+              </div>
+            </div>
+            <p class="card-desc">Automated KYC identity verification, AML transaction monitoring, sanctions screening and SAR filing. Integrates with core banking systems.</p>
+            <div class="card-footer">
+              <div class="card-tags"><span class="tag tp">KYC/AML</span><span class="tag tp">Banking</span><span class="tag tg">SOC 2</span><span class="tag tt">Human-in-loop</span></div>
+              <div class="card-actions"><span class="rating"><span class="star">&#9733;</span> 4.9</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AGENT 8 - LEGAL -->
+      <div class="agent-card" data-industry="legal" data-category="policy" data-price="119" data-rating="4.6" data-trial="true">
+        <div class="card-inner">
+          <div class="card-icon" style="background:var(--tld);">⚖️</div>
+          <div class="card-body">
+            <div class="card-top">
+              <div>
+                <div class="card-title">Contract Review Agent</div>
+                <div class="card-by">by LegalAI &bull; <span class="star">&#9733;</span> 4.6 &bull; 150 deployments</div>
+              </div>
+              <div class="card-price">
+                <div class="price-val">$119/mo</div>
+                <div class="price-trial">14-day free trial</div>
+              </div>
+            </div>
+            <p class="card-desc">Reviews contracts for missing clauses, liability risks, unfavorable terms and compliance gaps. Produces a structured risk report with recommendations.</p>
+            <div class="card-footer">
+              <div class="card-tags"><span class="tag tt">Contract Review</span><span class="tag tt">Legal</span></div>
+              <div class="card-actions"><span class="rating"><span class="star">&#9733;</span> 4.6</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- end agent-cards -->
+
+    <!-- NO RESULTS -->
+    <div class="no-agents" id="no-results" style="display:none;">
+      <div class="icon">🔍</div>
+      <p style="font-size:15px;font-weight:600;color:var(--t);margin-bottom:8px;">No agents found</p>
+      <p>Try adjusting your filters or search terms.</p>
+      <button class="btn" style="margin-top:16px;" onclick="clearFilters()">Clear all filters</button>
+    </div>
+
+    <!-- PAGINATION -->
+    <div class="pagination" id="pagination">
+      <div class="page-btn active">1</div>
+      <div class="page-btn">2</div>
+      <div class="page-btn">3</div>
+      <div class="page-btn" style="width:auto;padding:0 12px;">Next &rarr;</div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+function filterAgents() {
+  const search = document.getElementById('search-input').value.toLowerCase();
+  const cards = document.querySelectorAll('.agent-card');
+  let visible = 0;
+
+  cards.forEach(card => {
+    const title = card.querySelector('.card-title')?.textContent.toLowerCase() || '';
+    const desc = card.querySelector('.card-desc')?.textContent.toLowerCase() || '';
+    const tags = card.querySelector('.card-tags')?.textContent.toLowerCase() || '';
+    const industry = card.dataset.industry || '';
+    const price = parseInt(card.dataset.price) || 0;
+    const rating = parseFloat(card.dataset.rating) || 0;
+    const hasTrial = card.dataset.trial === 'true';
+
+    // Search match
+    const searchMatch = !search || title.includes(search) || desc.includes(search) || tags.includes(search);
+
+    // Industry filter
+    const insChecked = document.getElementById('f-ins').checked;
+    const hcChecked = document.getElementById('f-hc').checked;
+    const reChecked = document.getElementById('f-re').checked;
+    const bkChecked = document.getElementById('f-bk').checked;
+    const lgChecked = document.getElementById('f-lg').checked;
+    const anyIndustry = !insChecked && !hcChecked && !reChecked && !bkChecked && !lgChecked;
+    const industryMatch = anyIndustry ||
+      (insChecked && industry === 'insurance') ||
+      (hcChecked && industry === 'healthcare') ||
+      (reChecked && industry === 'realestate') ||
+      (bkChecked && industry === 'banking') ||
+      (lgChecked && industry === 'legal');
+
+    // Price filter
+    const priceFilter = document.querySelector('input[name="price"]:checked').value;
+    const priceMatch =
+      priceFilter === 'any' ||
+      (priceFilter === 'free' && hasTrial) ||
+      (priceFilter === 'low' && price < 100) ||
+      (priceFilter === 'mid' && price >= 100 && price <= 250) ||
+      (priceFilter === 'high' && price > 250);
+
+    // Rating filter
+    const ratingFilter = parseFloat(document.querySelector('input[name="rating"]:checked').value);
+    const ratingMatch = rating >= ratingFilter;
+
+    const show = searchMatch && industryMatch && priceMatch && ratingMatch;
+    card.style.display = show ? '' : 'none';
+    if (show) visible++;
+  });
+
+  document.getElementById('list-label').innerHTML = `Showing <strong style="color:var(--t);">${visible}</strong> agents`;
+  document.getElementById('no-results').style.display = visible === 0 ? 'block' : 'none';
+  document.getElementById('pagination').style.display = visible === 0 ? 'none' : 'flex';
+}
+
+function clearFilters() {
+  document.getElementById('search-input').value = '';
+  ['f-ins','f-hc','f-re','f-bk','f-lg'].forEach(id => document.getElementById(id).checked = false);
+  ['c-claims','c-uw','c-fraud','c-policy','c-loan','c-kyc'].forEach(id => document.getElementById(id).checked = false);
+  document.getElementById('p-any').checked = true;
+  document.getElementById('r-any').checked = true;
+  ['comp-hipaa','comp-soc2','comp-hitl'].forEach(id => document.getElementById(id).checked = false);
+  document.querySelectorAll('.ind-chip').forEach((c,i) => { c.classList.toggle('active', i === 0); });
+  filterAgents();
+}
+
+function toggleChip(el, industry) {
+  document.querySelectorAll('.ind-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  // Uncheck all industry filters first
+  ['f-ins','f-hc','f-re','f-bk','f-lg'].forEach(id => document.getElementById(id).checked = false);
+  if (industry === 'insurance') document.getElementById('f-ins').checked = true;
+  else if (industry === 'healthcare') document.getElementById('f-hc').checked = true;
+  else if (industry === 'realestate') document.getElementById('f-re').checked = true;
+  else if (industry === 'banking') document.getElementById('f-bk').checked = true;
+  else if (industry === 'legal') document.getElementById('f-lg').checked = true;
+  filterAgents();
+}
+
+// Read URL param on load
+window.addEventListener('DOMContentLoaded', () => {
+  const params = new URLSearchParams(window.location.search);
+  const ind = params.get('industry');
+  if (ind) {
+    const chip = document.querySelector(`.ind-chip.${ind === 'insurance' ? 'ins' : ind === 'healthcare' ? 'hc' : ind === 'realestate' ? 're' : ind === 'banking' ? 'bk' : 'lg'}`);
+    if (chip) toggleChip(chip, ind);
+  }
+});
+</script>
+</body>
+</html>
