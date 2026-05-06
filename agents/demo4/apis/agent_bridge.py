@@ -89,6 +89,17 @@ def _safe_json(text: str, fallback_key: str = "data") -> dict:
         return {fallback_key: text[:500]}
 
 
+def _reasoning_entries(parsed: dict, step: int) -> list[dict]:
+    """Return agent-observation events for the agent_reasoning array in a parsed response."""
+    reasoning = parsed.get("agent_reasoning", [])
+    if not isinstance(reasoning, list):
+        return []
+    return [
+        {"type": "agent-observation", "step": step, "text": str(r)}
+        for r in reasoning if r and isinstance(r, str)
+    ]
+
+
 async def run_pipeline(session_id: str, trigger_input: dict, service: PipelineService) -> None:
     """
     Execute the full 7-step settlement failure prevention pipeline.
@@ -159,6 +170,8 @@ async def run_pipeline(session_id: str, trigger_input: dict, service: PipelineSe
         summary1 = f"{t1_count + t2_count} trades ({t1_count} T+1, {t2_count} T+2), {len(flags)} quality flags"
         await emit({"type": "tool-result", "step": 1, "tool": "get_tis_open_trades",
                     "preview": f"{t1_count + t2_count} trades loaded ({t1_count} T+1, {t2_count} T+2), {len(flags)} quality flags"})
+        for ev in _reasoning_entries(parsed1, 1):
+            await emit(ev)
         await step_complete(1, summary1, snapshot)
     except Exception as e:
         logger.error("[BRIDGE] step1_failed  session_id=%s error=%s", session_id, e)
@@ -256,9 +269,11 @@ async def run_pipeline(session_id: str, trigger_input: dict, service: PipelineSe
                     "rule_triggers": item.get("rule_triggers", []),
                 })
 
-            # Emit classification observations for CRITICAL items
             await emit({"type": "tool-result", "step": 2, "tool": "get_historical_failure_rates",
                         "preview": f"{counts['CRITICAL']} CRITICAL / {counts['HIGH']} HIGH / {counts['MEDIUM']} MEDIUM / {counts['LOW']} LOW"})
+            for ev in _reasoning_entries(parsed2, 2):
+                await emit(ev)
+            # Emit classification observations for CRITICAL items
             for item in [i for i in watchlist_data if i.get("risk_classification") == "CRITICAL"]:
                 rationale = (item.get("classification_rationale") or "")[:200]
                 triggers = item.get("rule_triggers", [])
@@ -316,6 +331,8 @@ async def run_pipeline(session_id: str, trigger_input: dict, service: PipelineSe
 
                 await emit({"type": "tool-result", "step": 3, "tool": "get_cis_deep_profile",
                             "preview": f"{len(risk_assessment)} counterparties risk-assessed"})
+                for ev in _reasoning_entries(parsed3, 3):
+                    await emit(ev)
                 flag_note = " [SYSTEMIC RISK FLAG]" if systemic_flag else ""
                 summary3 = f"{len(risk_assessment)} counterparties analysed{flag_note}"
                 await step_complete(3, summary3, parsed3)
@@ -359,6 +376,8 @@ async def run_pipeline(session_id: str, trigger_input: dict, service: PipelineSe
 
                 await emit({"type": "tool-result", "step": 4, "tool": "get_jse_rulebook_guidance",
                             "preview": f"{len(plan_items)} intervention decisions generated"})
+                for ev in _reasoning_entries(parsed4, 4):
+                    await emit(ev)
                 by_type: dict[str, int] = {}
                 for item in plan_items:
                     t = item.get("intervention_type", "UNKNOWN")
@@ -454,6 +473,8 @@ async def run_pipeline(session_id: str, trigger_input: dict, service: PipelineSe
                             parsed5 = _safe_json(str(raw5), "lolr_execution_report")
                             lolr_exec_result = parsed5.get("lolr_execution_report", parsed5)
                             ctx["lolr_report"] = lolr_exec_result
+                            for ev in _reasoning_entries(parsed5, 5):
+                                await emit(ev)
                             successes = lolr_exec_result.get("successful_executions", len(capped_items))
                             total_zar = lolr_exec_result.get("total_value_zar", total_value)
                             summary5 = f"{successes} LOLR transactions confirmed, ZAR {total_zar:,} total"
@@ -480,6 +501,8 @@ async def run_pipeline(session_id: str, trigger_input: dict, service: PipelineSe
                         parsed6 = _safe_json(str(raw6), "roll_execution_report")
                         roll_report = parsed6.get("roll_execution_report", parsed6)
                         ctx["roll_report"] = roll_report
+                        for ev in _reasoning_entries(parsed6, 6):
+                            await emit(ev)
                         successes = roll_report.get("successful_rolls", len(roll_items))
                         summary6 = f"{successes} settlement rolls submitted to Strate"
                         await step_complete(6, summary6, parsed6)
@@ -509,6 +532,8 @@ async def run_pipeline(session_id: str, trigger_input: dict, service: PipelineSe
         parsed7 = _safe_json(str(raw7), "pipeline_summary")
         pipeline_summary = parsed7.get("pipeline_summary", parsed7)
         ctx["pipeline_summary"] = pipeline_summary
+        for ev in _reasoning_entries(parsed7, 7):
+            await emit(ev)
 
         run_id = pipeline_summary.get("run_id", f"JSE-SFPP-{datetime.now().strftime('%Y%m%d-%H%M')}")
         ops_summary = pipeline_summary.get("operations_summary", {})

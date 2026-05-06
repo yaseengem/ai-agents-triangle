@@ -69,9 +69,14 @@ INSTRUCTIONS:
 4. Call get_cis_counterparty_data for all counterparty IDs identified
 5. Join all datasets on counterparty_id and trade_id
 6. Flag any data gaps or integration failures (e.g., CIS_UNAVAILABLE for a counterparty)
-7. Return a normalised JSON structure: settlement_exposure_snapshot with fields:
-   snapshot_timestamp, t1_trades[], t2_trades[], counterparty_profiles[],
-   ecs_positions[], data_quality_flags[]
+7. Return a normalised JSON structure with two top-level keys:
+   - "settlement_exposure_snapshot": object with fields snapshot_timestamp, t1_trades[],
+     t2_trades[], counterparty_profiles[], ecs_positions[], data_quality_flags[]
+   - "agent_reasoning": array of 3-6 full sentences (minimum 10 words each) documenting
+     key observations from ingestion — each sentence must name the specific counterparty
+     or data source affected and explain what was found (e.g. "CIS returned UNAVAILABLE
+     for CP-007, making position verification impossible before T+1 settlement.",
+     "ECS reported net obligation of ZAR 120M for CP-001, triggering LARGE_EXPOSURE tag.")
 
 RULES:
 - If CIS data is unavailable for any counterparty, mark that counterparty as
@@ -120,10 +125,18 @@ INSTRUCTIONS:
    c. Use your reasoning to adjudicate any borderline or multi-signal cases
    d. Assign final risk classification with rationale
 4. Sort output by risk classification (CRITICAL first) then by net_obligation descending
-5. Return a JSON object with key "settlement_watchlist" containing an array where each item has:
-   trade_id, counterparty_id, counterparty_name, settlement_date, risk_classification,
-   rule_triggers[], net_obligation_zar, recommended_priority, classification_rationale,
-   risk_summary (required for CRITICAL items — 1-2 sentence plain English explanation)
+5. Return a JSON object with two top-level keys:
+   - "settlement_watchlist": array sorted CRITICAL first, each item with:
+     trade_id, counterparty_id, counterparty_name, settlement_date, risk_classification,
+     rule_triggers[], net_obligation_zar, recommended_priority, classification_rationale,
+     risk_summary (required for CRITICAL/HIGH items — 1-2 sentence plain English explanation)
+   - "agent_reasoning": array of 4-8 full sentences (minimum 10 words each) documenting
+     analytical decisions — each sentence must name the specific trade or counterparty
+     and state the exact rule or signal that drove the classification (e.g. "CP-001
+     escalated to CRITICAL because net obligation of ZAR 120M exceeds the ZAR 100M
+     threshold.", "CP-005 overridden to CRITICAL via watchlist escalation rule despite
+     only ZAR 35M obligation.", "Market SAVI of 28 indicates elevated volatility, applied
+     as a tiebreaker for two borderline MEDIUM cases.")
 
 Output must be valid JSON only.
 """
@@ -169,6 +182,12 @@ For each HIGH or CRITICAL counterparty (deduplicate by counterparty_id):
 Return a JSON object with keys:
 - "counterparty_risk_assessment": array of counterparty_risk_brief objects
 - "systemic_risk_flag": boolean (true if >3 simultaneous CRITICAL counterparties)
+- "agent_reasoning": array of 3-6 full sentences (minimum 10 words each) explaining
+  key findings — each sentence must name the counterparty and the specific signal that
+  determined the root cause or urgency (e.g. "CP-001 root cause determined as LIQUIDITY
+  because CIS shows lending balance at 62%, well below the 80% threshold.",
+  "CP-007 CIS_CONNECTIVITY root cause confirmed — deep profile returned no data for
+  the past 6 hours, preventing position verification.")
 
 Output must be valid JSON only.
 """
@@ -216,12 +235,21 @@ INSTRUCTIONS:
 2. For LOLR candidates, call check_lolr_capacity before finalising decision
 3. Apply decision rules in sequence above
 4. For each item, call calculate_intervention_cost for the chosen intervention
-5. Return a JSON object with key "intervention_plan" containing:
-   - "items": array where each item has: trade_id, counterparty_id, intervention_type,
-     intervention_rationale (2 sentences), estimated_cost_zar, execution_priority (1=highest),
-     requires_human_approval (boolean), isin, quantity, settlement_date
-   - "plan_summary": object with total_interventions (by type count), total_estimated_cost_zar,
-     systemic_risk_flag, recommended_execution_sequence
+5. Return a JSON object with keys:
+   - "intervention_plan": object with:
+     - "items": array where each item has: trade_id, counterparty_id, intervention_type,
+       intervention_rationale (2 sentences), estimated_cost_zar, execution_priority (1=highest),
+       requires_human_approval (boolean), isin, quantity, settlement_date
+     - "plan_summary": object with total_interventions (by type count), total_estimated_cost_zar,
+       systemic_risk_flag, recommended_execution_sequence
+   - "agent_reasoning": array of 4-8 full sentences (minimum 10 words each) documenting
+     decision logic — each sentence must name the trade/counterparty and state which
+     decision rule branch applied and why (e.g. "TRD-2001 assigned LOLR_TRIGGER because
+     CP-001 is CRITICAL with LIQUIDITY root cause and IMMEDIATE urgency with sufficient
+     LOLR capacity confirmed.", "TRD-2005 assigned HUMAN_ESCALATION because CP-005 carries
+     an active FSCA regulatory flag, which always prevents automated action per JSE rules.",
+     "TRD-2002 assigned SETTLEMENT_ROLL because CP-002 is HIGH with STANDARD urgency,
+     matching the HIGH+STANDARD → SETTLEMENT_ROLL decision branch.")
 
 Output must be valid JSON only.
 """
@@ -259,10 +287,16 @@ COMPLIANCE NOTE:
 Every LOLR transaction must include the regulatory_basis field citing:
 "JSE CCP Rulebook Section 14.3 — Lender of Last Resort"
 
-Return a JSON object with key "lolr_execution_report" containing:
-- total_transactions_submitted, total_value_zar, successful_executions
-- failed_executions (with reasons), execution_log[], items_escalated_to_human
-- guard_limit_reached (boolean — true if ZAR 500M limit was hit)
+Return a JSON object with keys:
+- "lolr_execution_report": object with total_transactions_submitted, total_value_zar,
+  successful_executions, failed_executions (with reasons), execution_log[],
+  items_escalated_to_human, guard_limit_reached (boolean)
+- "agent_reasoning": array of 3-5 full sentences (minimum 10 words each) explaining
+  execution decisions — each sentence must name the trade and state the outcome with
+  its reason (e.g. "TRD-2001 LOLR transaction constructed and validated successfully,
+  submitted to CCP booking system and confirmed with reference LOLR-20260506-001.",
+  "TRD-2003 validation failed due to insufficient securities inventory; item escalated
+  to human review rather than retried.")
 
 Output must be valid JSON only.
 """
@@ -307,11 +341,17 @@ INSTRUCTIONS:
    g. Call notify_counterparty upon confirmation
 2. If submission fails, retry once; if still failing → HUMAN_ESCALATION
 
-Return a JSON object with key "roll_execution_report" containing:
-- total_rolls_submitted, successful_rolls, failed_rolls (with reasons)
-- ineligible_trades (list of escalated trade IDs)
-- roll_log[]: per-trade entries with trade_id, original_settlement_date,
-  new_settlement_date, reason_code, strate_confirmation_ref, counterparty_notified
+Return a JSON object with keys:
+- "roll_execution_report": object with total_rolls_submitted, successful_rolls,
+  failed_rolls (with reasons), ineligible_trades, roll_log[] (per-trade: trade_id,
+  original_settlement_date, new_settlement_date, reason_code, strate_confirmation_ref,
+  counterparty_notified)
+- "agent_reasoning": array of 3-5 full sentences (minimum 10 words each) explaining
+  roll decisions — each sentence must name the trade and state what was found and done
+  (e.g. "TRD-2002 confirmed eligible for roll; mapped LIQUIDITY root cause to
+  LIQUIDITY_CONSTRAINT reason code and submitted instruction to Strate via TIS.",
+  "TRD-2002 counterparty CP-002 notified of roll to new settlement date within the
+  required 15-minute window, Strate confirmation reference STR-20260506-447 received.")
 
 Output must be valid JSON only.
 """
@@ -363,9 +403,17 @@ INSTRUCTIONS:
    - Agent decision rationale for all CRITICAL items
    - Data quality attestation (any CIS_UNAVAILABLE or missing data flagged)
 9. Call store_fsca_report with the compliance report
-10. Return a JSON object with key "pipeline_summary" containing:
-    run_id, execution_status (SUCCESS/PARTIAL/FAILED), operations_summary,
-    systemic_stress_indicator, trend_direction, next_scheduled_run_note
+10. Return a JSON object with keys:
+    - "pipeline_summary": object with run_id, execution_status (SUCCESS/PARTIAL/FAILED),
+      operations_summary, systemic_stress_indicator, trend_direction, next_scheduled_run_note
+    - "agent_reasoning": array of 3-6 full sentences (minimum 10 words each) summarizing
+      key audit observations — each sentence must be specific and actionable (e.g.
+      "CRITICAL count increased from 1 to 3 versus prior cycle, triggering systemic stress
+      indicator and high-severity alert to ops-oncall and head-of-clearing.",
+      "All 3 CRITICAL interventions were successfully executed or escalated; estimated
+      ZAR 175M in settlement value protected this cycle.",
+      "CIS_UNAVAILABLE flag for CP-007 noted in FSCA compliance report as a data quality
+      gap requiring remediation before next monitoring cycle.")
 
 Output must be valid JSON only.
 """

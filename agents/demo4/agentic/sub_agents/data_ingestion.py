@@ -41,5 +41,7 @@ def data_ingestion_agent(trigger_input: str) -> str:
         f"Trigger context: {trigger_input}. "
         f"Follow your instructions exactly: call get_tis_open_trades first, "
         f"then get_ecs_clearing_positions, then get_cis_counterparty_data. "
-        f"Return settlement_exposure_snapshot as valid JSON."
+        f"Return valid JSON with both 'settlement_exposure_snapshot' and an 'agent_reasoning' "
+        f"array (3-6 strings) documenting what you found: data quality issues, CIS gaps, "
+        f"counterparties with missing data, unusual exposure levels."
     ))
