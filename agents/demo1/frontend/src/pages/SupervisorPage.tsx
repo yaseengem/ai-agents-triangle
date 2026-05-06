@@ -41,7 +41,7 @@ export function SupervisorPage() {
       <div style={{ background: 'var(--s)', borderBottom: '1px solid var(--b)', padding: '14px 32px', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--t)' }}>Supervisor dashboard</div>
-          <div style={{ fontSize: 12, color: 'var(--t2)' }}>Claims Processing Agent · Calvin · April 2026</div>
+          <div style={{ fontSize: 12, color: 'var(--t2)' }}>Claim Processing Agent · April 2026</div>
         </div>
         <button className="btn btn-sm" onClick={() => navigate('/rules')}>⚙️ Edit rules</button>
         <button className="btn btn-sm">📊 Export report</button>

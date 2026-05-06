@@ -58,7 +58,7 @@ export function SubmitClaimPage() {
     <div style={{ background: 'var(--bg)', minHeight: '100vh', padding: '32px 40px' }}>
       <div style={{ maxWidth: 680, margin: '0 auto' }}>
         <h1 style={{ fontSize: 22, fontWeight: 700, color: 'var(--t)', marginBottom: 4 }}>Submit a claim</h1>
-        <p style={{ fontSize: 13, color: 'var(--t2)', marginBottom: 28 }}>Calvin will review your claim automatically.</p>
+        <p style={{ fontSize: 13, color: 'var(--t2)', marginBottom: 28 }}>The Claim Processing Agent will review your claim automatically.</p>
 
         {/* Stepper */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 28 }}>
@@ -136,7 +136,7 @@ export function SubmitClaimPage() {
               </div>
               {submitting && (
                 <div style={{ background: 'var(--acd)', borderRadius: 10, padding: 14, fontSize: 13, color: 'var(--ac)', marginBottom: 16 }}>
-                  🤖 Calvin is processing your claim...
+                  🤖 Claim Processing Agent is processing your claim...
                   <div style={{ marginTop: 8, fontSize: 12, color: 'var(--t2)', whiteSpace: 'pre-wrap', maxHeight: 120, overflow: 'auto' }}>{output}</div>
                 </div>
               )}

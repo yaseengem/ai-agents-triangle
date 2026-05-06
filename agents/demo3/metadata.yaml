@@ -1,7 +1,12 @@
-name: Lance
+name: Loan Processing Agent
 description: >
-  Loan application processing with credit scoring, risk analysis,
-  and approval/rejection decision workflows.
+  Automates retail and small-business loan origination for banks and
+  credit unions. Applicants submit financial documents and personal
+  data; the agent pulls credit bureau scores, calculates debt-to-income
+  ratios, applies institution-specific lending policy rules, and routes
+  borderline applications to a loan officer for final review — returning
+  an approve, conditional-approve, or decline decision with a
+  compliance-ready explanation of factors considered.
 use_case: loan_processing
 domain: banking
 api_port: 3003

@@ -18,6 +18,50 @@ const STATUS_COLORS: Record<string, string> = {
   unknown: 'var(--t3)',
 }
 
+function FilterGroup({
+  label, options, selected, onChange,
+}: {
+  label: string
+  options: string[]
+  selected: Set<string>
+  onChange: (v: Set<string>) => void
+}) {
+  function toggle(opt: string) {
+    const next = new Set(selected)
+    if (next.has(opt)) next.delete(opt)
+    else next.add(opt)
+    onChange(next)
+  }
+
+  return (
+    <div style={{ marginBottom: 20 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+        <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.08em' }}>{label}</span>
+        {selected.size > 0 && (
+          <button onClick={() => onChange(new Set())}
+            style={{ fontSize: 10, color: 'var(--ac)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+            clear
+          </button>
+        )}
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        {options.map((opt) => {
+          const checked = selected.has(opt)
+          return (
+            <button key={opt} onClick={() => toggle(opt)}
+              style={{ display: 'flex', alignItems: 'center', gap: 8, textAlign: 'left', padding: '6px 10px', borderRadius: 6, border: 'none', cursor: 'pointer', fontSize: 13, background: checked ? 'var(--acd)' : 'transparent', color: checked ? 'var(--ac)' : 'var(--t2)', transition: 'all .15s' }}>
+              <span style={{ width: 14, height: 14, borderRadius: 3, border: `1.5px solid ${checked ? 'var(--ac)' : 'var(--b2)'}`, background: checked ? 'var(--ac)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all .15s' }}>
+                {checked && <span style={{ color: '#fff', fontSize: 9, lineHeight: 1, fontWeight: 700 }}>✓</span>}
+              </span>
+              <span style={{ fontWeight: checked ? 600 : 400 }}>{opt.replace(/_/g, ' ')}</span>
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 function AgentCard({ agent, onClick }: { agent: PlatformAgent; onClick: () => void }) {
   const meta = DOMAIN_META[agent.domain] ?? { icon: '🤖', tagCls: 'tgr', bg: 'var(--s3)' }
   return (
@@ -52,9 +96,23 @@ export function BrowseAgentsPage() {
   const [agents, setAgents] = useState<PlatformAgent[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
   const [search, setSearch] = useState('')
-  const [domain, setDomain] = useState(params.get('industry') ?? '')
-  const [statusFilter, setStatusFilter] = useState('')
+  const [domainFilter, setDomainFilter] = useState<Set<string>>(new Set())
+  const [statusFilter, setStatusFilter] = useState<Set<string>>(() => {
+    const s = params.get('status')
+    return s ? new Set([s]) : new Set()
+  })
+  const [liveStatusFilter, setLiveStatusFilter] = useState<Set<string>>(new Set())
+  const [useCaseFilter, setUseCaseFilter] = useState<Set<string>>(new Set())
+  const [versionFilter, setVersionFilter] = useState<Set<string>>(new Set())
+
+  useEffect(() => {
+    const s = params.get('status')
+    setStatusFilter(s ? new Set([s]) : new Set())
+    const d = params.get('domain')
+    setDomainFilter(d ? new Set([d]) : new Set())
+  }, [params])
 
   useEffect(() => {
     fetchAgents()
@@ -65,41 +123,51 @@ export function BrowseAgentsPage() {
 
   const filtered = agents.filter((a) => {
     if (search && !`${a.name} ${a.description} ${a.use_case}`.toLowerCase().includes(search.toLowerCase())) return false
-    if (domain && a.domain !== domain) return false
-    if (statusFilter && a.status !== statusFilter) return false
+    if (domainFilter.size > 0 && !domainFilter.has(a.domain)) return false
+    if (statusFilter.size > 0 && !statusFilter.has(a.status)) return false
+    if (liveStatusFilter.size > 0 && !liveStatusFilter.has(a.live_status)) return false
+    if (useCaseFilter.size > 0 && !useCaseFilter.has(a.use_case)) return false
+    if (versionFilter.size > 0 && !versionFilter.has(a.version)) return false
     return true
   })
 
-  const domains = [...new Set(agents.map((a) => a.domain))]
+  const anyFilter = !!(search || domainFilter.size || statusFilter.size || liveStatusFilter.size || useCaseFilter.size || versionFilter.size)
+  const clearAll = () => {
+    setSearch('')
+    setDomainFilter(new Set())
+    setStatusFilter(new Set())
+    setLiveStatusFilter(new Set())
+    setUseCaseFilter(new Set())
+    setVersionFilter(new Set())
+  }
+
+  const domainOptions   = [...new Set(agents.map((a) => a.domain))]
+  const useCaseOptions  = [...new Set(agents.map((a) => a.use_case))]
+  const versionOptions  = [...new Set(agents.map((a) => a.version))].sort()
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg)' }}>
 
       {/* Sidebar */}
-      <aside style={{ width: 220, flexShrink: 0, borderRight: '1px solid var(--b)', padding: '24px 16px', background: 'var(--s)' }}>
-        <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 12 }}>Domain</div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          {['', ...domains].map((d) => (
-            <button key={d || '_all'} onClick={() => setDomain(d)}
-              style={{ textAlign: 'left', padding: '7px 10px', borderRadius: 6, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: domain === d ? 600 : 400, background: domain === d ? 'var(--acd)' : 'transparent', color: domain === d ? 'var(--ac)' : 'var(--t2)', transition: 'all .15s' }}>
-              {d ? d.charAt(0).toUpperCase() + d.slice(1) : 'All domains'}
+      <aside style={{ width: 240, flexShrink: 0, borderRight: '1px solid var(--b)', padding: '24px 16px', background: 'var(--s)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+          <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--t)', textTransform: 'uppercase', letterSpacing: '.08em' }}>Filters</span>
+          {anyFilter && (
+            <button onClick={clearAll} style={{ fontSize: 11, color: 'var(--ac)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+              Clear all
             </button>
-          ))}
+          )}
         </div>
-        <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 12, marginTop: 24 }}>Status</div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          {['', 'active', 'stub'].map((s) => (
-            <button key={s || '_all'} onClick={() => setStatusFilter(s)}
-              style={{ textAlign: 'left', padding: '7px 10px', borderRadius: 6, border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: statusFilter === s ? 600 : 400, background: statusFilter === s ? 'var(--acd)' : 'transparent', color: statusFilter === s ? 'var(--ac)' : 'var(--t2)', transition: 'all .15s' }}>
-              {s || 'All statuses'}
-            </button>
-          ))}
-        </div>
+
+        <FilterGroup label="Domain"      options={domainOptions}  selected={domainFilter}      onChange={setDomainFilter} />
+        <FilterGroup label="Status"      options={['active', 'stub']} selected={statusFilter}  onChange={setStatusFilter} />
+        <FilterGroup label="Live status" options={['online', 'offline', 'unknown']} selected={liveStatusFilter} onChange={setLiveStatusFilter} />
+        <FilterGroup label="Use case"    options={useCaseOptions} selected={useCaseFilter}     onChange={setUseCaseFilter} />
+        <FilterGroup label="Version"     options={versionOptions} selected={versionFilter}     onChange={setVersionFilter} />
       </aside>
 
       {/* Main */}
       <main style={{ flex: 1, padding: '28px 32px' }}>
-        {/* Search */}
         <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 28 }}>
           <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search agents..."
             style={{ flex: 1, maxWidth: 420, padding: '9px 14px', borderRadius: 8, border: '1px solid var(--b2)', fontSize: 13, background: 'var(--s)', color: 'var(--t)', outline: 'none' }} />
@@ -118,7 +186,7 @@ export function BrowseAgentsPage() {
         {!loading && !error && filtered.length === 0 && (
           <div style={{ color: 'var(--t2)', textAlign: 'center', padding: 60 }}>
             No agents match your filters.
-            {(search || domain || statusFilter) && <button className="btn btn-sm" style={{ marginLeft: 12 }} onClick={() => { setSearch(''); setDomain(''); setStatusFilter('') }}>Clear filters</button>}
+            {anyFilter && <button className="btn btn-sm" style={{ marginLeft: 12 }} onClick={clearAll}>Clear filters</button>}
           </div>
         )}
 

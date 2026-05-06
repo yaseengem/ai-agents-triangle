@@ -75,11 +75,15 @@ export function AgentDetailPage() {
           </div>
           <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
             {agent.live_status === 'online' ? (
-              <a href={`http://localhost:${agent.frontend_port}`} target="_blank" rel="noopener noreferrer" className="btn btn-p">Launch agent →</a>
+              <a href={`http://localhost:${agent.frontend_port}`} target="_blank" rel="noopener noreferrer" className="btn btn-p">Go to Agent Operations →</a>
             ) : (
-              <button className="btn btn-p" onClick={() => navigate(`/connect/${agent.id}`)}>Connect & configure</button>
+              <button className="btn btn-p" onClick={() => navigate(`/connect/${agent.id}`)}>Launch Agent</button>
             )}
-            <button className="btn btn-sm">Schedule demo</button>
+            <button
+              className="btn btn-sm"
+              onClick={() => navigate(`/configure/${agent.id}`)}
+              disabled={agent.live_status !== 'online'}
+            >Configure agent</button>
           </div>
         </div>
       </div>

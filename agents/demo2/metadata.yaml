@@ -1,7 +1,12 @@
-name: Arvo
+name: Underwriting Agent
 description: >
-  Automated underwriting risk assessment with document ingestion,
-  rule evaluation, and escalation workflows.
+  Automates new-business underwriting for health insurance carriers.
+  Underwriters submit applicant data, medical history, and supporting
+  documents; the agent scores risk against configurable clinical and
+  actuarial rule sets, flags pre-existing conditions or data gaps for
+  human review, and produces a recommended coverage tier, premium
+  adjustment, or decline decision — complete with a regulatory-ready
+  audit trail for each case.
 use_case: underwriting
 domain: insurance
 api_port: 3002

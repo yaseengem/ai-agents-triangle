@@ -48,6 +48,9 @@ Thumbs.db
 .idea/
 .vscode/settings.json
 
+# Assets
+logo.png
+
 # Test / coverage
 .pytest_cache/
 htmlcov/

@@ -71,7 +71,7 @@ export function AppShell({ children }: AppShellProps) {
           to="/"
           className="text-xl font-bold text-gray-900 tracking-tight hover:text-blue-600 transition-colors flex-shrink-0"
         >
-          Neural
+          <img src="/logo.png" alt="Neural AI" style={{ height: 28, width: 'auto' }} />
         </Link>
         <Breadcrumbs />
       </header>

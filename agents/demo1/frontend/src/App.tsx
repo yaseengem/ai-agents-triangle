@@ -27,7 +27,7 @@ function CalvinShell({ children }: { children: React.ReactNode }) {
             style={{ display: 'flex', alignItems: 'center', gap: 9, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
           >
             <div style={{ width: 30, height: 30, background: 'var(--ac)', borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15 }}>🤖</div>
-            <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--t)' }}>Calvin</span>
+            <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--t)' }}>Claim Processing Agent</span>
           </button>
           <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
             {NAV_LINKS.map(l => (
@@ -51,7 +51,7 @@ function HomePage() {
   return (
     <div style={{ padding: '60px 40px', maxWidth: 680, margin: '0 auto', textAlign: 'center' }}>
       <div style={{ fontSize: 48, marginBottom: 16 }}>🤖</div>
-      <h1 style={{ fontSize: 28, fontWeight: 700, color: 'var(--t)', marginBottom: 8 }}>Calvin — Claims Processing</h1>
+      <h1 style={{ fontSize: 28, fontWeight: 700, color: 'var(--t)', marginBottom: 8 }}>Claim Processing Agent</h1>
       <p style={{ fontSize: 15, color: 'var(--t2)', marginBottom: 40, lineHeight: 1.7 }}>
         Multi-agent insurance claims processing with human-in-the-loop review, fraud detection, and medical necessity validation.
       </p>

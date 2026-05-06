@@ -1,4 +1,17 @@
 name: DemoX
+# DESCRIPTION GUIDELINES (replace this block when creating a real agent):
+# Write 4-6 sentences that cover:
+#   1. The industry vertical and type of organisation this serves.
+#   2. Who the end users are (e.g. underwriters, loan officers, policyholders).
+#   3. What input they provide and what the agent does with it step by step.
+#   4. Any human-in-the-loop escalation points.
+#   5. The output or decision produced, and any compliance/audit requirements.
+# Be specific — avoid phrases like "processes documents" or "handles workflows".
+# Example:
+#   "Automates new-business underwriting for health insurance carriers.
+#    Underwriters submit applicant data and medical history; the agent scores
+#    risk against configurable rule sets, flags edge cases for human review,
+#    and produces a recommended premium or decline decision with an audit trail."
 description: >
   Template agent — copy this folder to demoN to create a new agent.
   Never modify this folder directly.

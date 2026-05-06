@@ -62,7 +62,7 @@ export function ReviewQueuePage() {
       <div style={{ background: 'var(--s)', borderBottom: '1px solid var(--b)', padding: '14px 32px', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 17, fontWeight: 700, color: 'var(--t)' }}>Claim review queue</div>
-          <div style={{ fontSize: 12, color: 'var(--t2)' }}>Claims Processing Agent · Calvin</div>
+          <div style={{ fontSize: 12, color: 'var(--t2)' }}>Claim Processing Agent</div>
         </div>
         <input
           value={search}
