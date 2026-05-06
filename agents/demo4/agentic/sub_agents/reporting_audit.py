@@ -49,7 +49,8 @@ def reporting_audit_agent(pipeline_context: str) -> str:
         f"Call compare_with_prior_cycle, write_audit_log, update_operations_dashboard. "
         f"If any CRITICAL items or escalations exist, call send_operations_alert with severity=HIGH. "
         f"Call store_fsca_report with the full compliance document. "
-        f"Return valid JSON with 'pipeline_summary' AND an 'agent_reasoning' array (3-6 strings) "
+        f"Return ONLY valid JSON — no text before or after the JSON object. "
+        f"Include 'pipeline_summary' AND an 'agent_reasoning' array (3-6 strings) "
         f"explaining: trend vs prior cycle, systemic stress determination, notable compliance "
         f"observations, intervention effectiveness summary."
     ))

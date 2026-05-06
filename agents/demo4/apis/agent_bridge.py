@@ -56,25 +56,40 @@ LOLR_GUARD_LIMIT_ZAR = 500_000_000
 def _extract_json(text: str) -> dict | list:
     """
     Extract JSON from LLM response text.
-    Strips markdown code fences if present, then parses.
+    Handles: bare JSON, code fences at start, code fences anywhere (preamble text).
     """
     text = text.strip()
-    # Strip markdown code block if present
+
+    # Case 1: code fence anywhere in text (e.g. "Here is the result:\n```json\n{...}\n```")
+    for marker in ("```json\n", "```\n"):
+        pos = text.find(marker)
+        if pos != -1:
+            inner = text[pos + len(marker):]
+            close = inner.find("\n```")
+            if close != -1:
+                inner = inner[:close]
+            inner = inner.strip()
+            try:
+                return json.loads(inner)
+            except json.JSONDecodeError:
+                pass
+
+    # Case 2: text starts directly with ``` (no newline variant)
     if text.startswith("```"):
         lines = text.split("\n")
-        # Remove first and last line (``` markers)
         inner = "\n".join(lines[1:-1] if lines[-1].strip() == "```" else lines[1:])
         text = inner.strip()
-    # Find first { or [
-    for start_char, end_char in [('{', '}'), ('[', ']')]:
+
+    # Case 3: find first { or [ and parse from there
+    for start_char in ('{', '['):
         idx = text.find(start_char)
         if idx != -1:
-            # Find matching end
             try:
                 return json.loads(text[idx:])
             except json.JSONDecodeError:
                 pass
-    # Try the whole thing
+
+    # Case 4: try the whole string
     return json.loads(text)
 
 
@@ -243,10 +258,16 @@ async def run_pipeline(session_id: str, trigger_input: dict, service: PipelineSe
 
             ctx["watchlist"] = watchlist_data
 
-            # Count by risk tier
-            counts = {"CRITICAL": 0, "HIGH": 0, "MEDIUM": 0, "LOW": 0}
+            # Count by risk tier — deduplicated per counterparty (highest tier wins)
+            _tier_rank = {"CRITICAL": 0, "HIGH": 1, "MEDIUM": 2, "LOW": 3}
+            _best: dict[str, str] = {}
             for item in watchlist_data:
+                cp_id = item.get("counterparty_id", "")
                 tier = item.get("risk_classification", "LOW")
+                if _tier_rank.get(tier, 3) < _tier_rank.get(_best.get(cp_id, "LOW"), 3):
+                    _best[cp_id] = tier
+            counts = {"CRITICAL": 0, "HIGH": 0, "MEDIUM": 0, "LOW": 0}
+            for tier in _best.values():
                 counts[tier] = counts.get(tier, 0) + 1
 
             service.update_session(session_id,

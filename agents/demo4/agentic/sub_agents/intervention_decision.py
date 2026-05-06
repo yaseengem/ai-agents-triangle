@@ -39,7 +39,8 @@ def intervention_decision_agent(risk_context: str) -> str:
         f"For each item: consult get_jse_rulebook_guidance, check LOLR capacity for LOLR candidates, "
         f"calculate intervention cost. Apply decision rules strictly — REGULATORY_FLAG items always "
         f"get HUMAN_ESCALATION. Set requires_human_approval=true for items needing human gate. "
-        f"Return valid JSON with 'intervention_plan' (items[] and plan_summary) AND an 'agent_reasoning' "
+        f"Return ONLY valid JSON — no text before or after the JSON object. "
+        f"Include 'intervention_plan' (items[] and plan_summary) AND an 'agent_reasoning' "
         f"array (4-8 strings) explaining: which decision rule branch applied per item, LOLR capacity "
         f"outcomes, why specific items required human approval vs automated action."
     ))

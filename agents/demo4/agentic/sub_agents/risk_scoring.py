@@ -39,7 +39,8 @@ def risk_scoring_agent(settlement_exposure_snapshot: str) -> str:
         f"Input exposure snapshot:\n{settlement_exposure_snapshot}\n\n"
         f"Apply deterministic rules first, then escalation overrides, then LLM adjudication. "
         f"Call get_market_volatility_context and get_historical_failure_rates for all counterparties. "
-        f"Return valid JSON with 'settlement_watchlist' sorted CRITICAL first AND an 'agent_reasoning' "
+        f"Return ONLY valid JSON — no text before or after the JSON object. "
+        f"Include 'settlement_watchlist' sorted CRITICAL first AND an 'agent_reasoning' "
         f"array (4-8 strings) explaining: which escalation overrides fired and for which counterparties, "
         f"how market context influenced scores, any borderline cases and how you resolved them."
     ))

@@ -44,7 +44,8 @@ def counterparty_risk_agent(settlement_watchlist: str) -> str:
         f"get_historical_settlement_record (90 days), and get_securities_lending_depth if lending gap exists. "
         f"Identify root_cause_category, intervention_urgency, and recommended_intervention_type. "
         f"Set systemic_risk_flag=true if >3 CRITICAL counterparties. "
-        f"Return valid JSON with 'counterparty_risk_assessment', 'systemic_risk_flag', AND an "
+        f"Return ONLY valid JSON — no text before or after the JSON object. "
+        f"Include 'counterparty_risk_assessment', 'systemic_risk_flag', AND an "
         f"'agent_reasoning' array (3-6 strings) explaining: root cause determination per counterparty, "
         f"key signals from CIS/watchlist/history, systemic flag rationale."
     ))

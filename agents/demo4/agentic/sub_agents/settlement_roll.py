@@ -41,6 +41,7 @@ def settlement_roll_agent(roll_items: str) -> str:
         f"For each item: check eligibility, determine new_settlement_date (+1 business day), "
         f"map root_cause to reason_code, format instruction, submit to TIS, confirm, notify counterparty. "
         f"Escalate ineligible trades to HUMAN_ESCALATION. "
-        f"Return valid JSON with 'roll_execution_report' AND an 'agent_reasoning' array (3-5 strings) "
+        f"Return ONLY valid JSON — no text before or after the JSON object. "
+        f"Include 'roll_execution_report' AND an 'agent_reasoning' array (3-5 strings) "
         f"explaining: eligibility outcomes, reason code mappings chosen and why, any escalations."
     ))

@@ -45,6 +45,7 @@ def lolr_execution_agent(lolr_items: str) -> str:
         f"For each item: construct_lolr_transaction, validate_lolr_transaction, submit_lolr_transaction, "
         f"then get_lolr_execution_status. Track running total value. "
         f"Every transaction must include regulatory_basis = 'JSE CCP Rulebook Section 14.3'. "
-        f"Return valid JSON with 'lolr_execution_report' AND an 'agent_reasoning' array (3-5 strings) "
+        f"Return ONLY valid JSON — no text before or after the JSON object. "
+        f"Include 'lolr_execution_report' AND an 'agent_reasoning' array (3-5 strings) "
         f"explaining: validation outcomes, any failures and retry decisions, guard limit application."
     ))
