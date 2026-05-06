@@ -1,58 +1,48 @@
 {
   "operations_summary": {
+    "run_id": "JSE-SFPP-20260506-1634",
     "total_trades_monitored": 8,
     "t1_trades": 4,
     "t2_trades": 4,
     "risk_distribution": {
-      "CRITICAL": 0,
-      "HIGH": 2,
-      "MEDIUM": 3,
-      "LOW": 3
+      "CRITICAL": 3,
+      "HIGH": 3,
+      "MEDIUM": 0,
+      "LOW": 2
     },
     "interventions_executed": {
+      "LOLR": {
+        "count": 0,
+        "success_rate": "N/A"
+      },
       "SETTLEMENT_ROLL": {
-        "count": 1,
-        "success_rate": 100,
-        "trades": [
-          "TRD-2001"
-        ]
+        "count": 0,
+        "success_rate": "N/A"
       },
       "HUMAN_ESCALATION": {
-        "count": 1,
-        "success_rate": 100,
-        "trades": [
-          "TRD-2007"
-        ]
-      },
-      "ALERT": {
-        "count": 0,
-        "success_rate": 0,
-        "trades": []
+        "count": 3,
+        "success_rate": "100%"
       }
     },
     "human_escalations_required": {
-      "count": 1,
+      "count": 3,
       "trade_ids": [
-        "TRD-2007"
-      ],
-      "reasons": [
-        "CIS_CONNECTIVITY_FAILURE"
+        "TRD-2001",
+        "TRD-2007",
+        "TRD-2005"
       ]
     },
-    "estimated_settlement_value_protected_zar": 120000000,
+    "estimated_settlement_value_protected_zar": 0,
     "system_health": {
-      "all_agents_executed": true,
-      "data_gaps": {
-        "CIS_UNAVAILABLE": [
-          "CP-007"
-        ],
-        "CIS_DEGRADED": [
-          "CP-003"
-        ]
-      }
+      "all_agents_executed": false,
+      "data_gaps": [
+        "CIS_UNAVAILABLE for CP-007",
+        "CIS_DEGRADED for CP-003"
+      ],
+      "execution_status": "PARTIAL"
     },
-    "run_id": "JSE-SFPP-20260506-1622",
-    "last_updated": "2026-05-06T16:22:38.036197+00:00"
+    "systemic_stress_indicator": false,
+    "trend_direction": "STABLE"
   },
-  "last_updated": "2026-05-06T16:22:45.013373+00:00"
+  "last_updated": "2026-05-06T16:37:34.817683+00:00"
 }

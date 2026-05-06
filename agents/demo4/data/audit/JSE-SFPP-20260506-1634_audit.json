@@ -1,0 +1,56 @@
+[
+  {
+    "timestamp": "2026-05-06T16:34:51.380946+00:00",
+    "agent_name": "Data Ingestion Agent",
+    "action_taken": "SNAPSHOT_INGESTION",
+    "input_summary": "Retrieved 8 trades (4 T+1, 4 T+2) from ECS/CIS/TIS systems",
+    "output_summary": "Generated settlement exposure snapshot with 7 counterparty profiles and 7 data quality flags identified",
+    "rule_applied": "Standard data collection rules",
+    "regulatory_basis": "JSE Settlement Rule 5.2"
+  },
+  {
+    "timestamp": "2026-05-06T16:34:52.000000+00:00",
+    "agent_name": "Risk Scoring Agent",
+    "action_taken": "RISK_CLASSIFICATION",
+    "input_summary": "Processed 8 trades for risk assessment with counterparty profile data",
+    "output_summary": "Classified 3 CRITICAL, 3 HIGH, 2 LOW risk trades using JSE rules",
+    "rule_applied": "net_obligation_exceeds_100M, CIS_UNAVAILABLE, watchlist_escalation, recent_failure_escalation, cis_degraded_escalation",
+    "regulatory_basis": "JSE Settlement Rule 3.4"
+  },
+  {
+    "timestamp": "2026-05-06T16:34:53.000000+00:00",
+    "agent_name": "Counterparty Assessment Agent",
+    "action_taken": "RISK_ANALYSIS",
+    "input_summary": "Analyzed 7 counterparties with CRITICAL/HIGH risk classifications",
+    "output_summary": "Identified market stress for CP-001, data unavailability for CP-007, operational concerns for CP-002/CP-003/CP-005",
+    "rule_applied": "Counterparty risk assessment framework",
+    "regulatory_basis": "FSCA Prudential Requirement 2.1"
+  },
+  {
+    "timestamp": "2026-05-06T16:34:54.000000+00:00",
+    "agent_name": "Intervention Decision Agent",
+    "action_taken": "INTERVENTION_PLANNING",
+    "input_summary": "Evaluated 3 CRITICAL items for intervention requirements",
+    "output_summary": "Recommended human escalation for TRD-2001 (ZAR 120M), TRD-2007 (CIS unavailable), TRD-2005 (watchlist)",
+    "rule_applied": "Human escalation for CRITICAL items requiring judgment",
+    "regulatory_basis": "JSE Settlement Rule 7.1"
+  },
+  {
+    "timestamp": "2026-05-06T16:34:55.000000+00:00",
+    "agent_name": "LOLR Execution Agent",
+    "action_taken": "NOT_EXECUTED",
+    "input_summary": "No LOLR interventions required based on intervention plan",
+    "output_summary": "Agent skipped - all CRITICAL items escalated to human intervention",
+    "rule_applied": "LOLR intervention criteria not met",
+    "regulatory_basis": "SARB LOLR Framework Section 4"
+  },
+  {
+    "timestamp": "2026-05-06T16:34:56.000000+00:00",
+    "agent_name": "Settlement Roll Agent",
+    "action_taken": "NOT_EXECUTED",
+    "input_summary": "No settlement roll interventions required based on intervention plan",
+    "output_summary": "Agent skipped - all CRITICAL items escalated to human intervention",
+    "rule_applied": "Settlement roll criteria not met",
+    "regulatory_basis": "JSE Settlement Rule 8.3"
+  }
+]
