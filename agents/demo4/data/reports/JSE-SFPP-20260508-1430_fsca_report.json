@@ -1,0 +1,133 @@
+{
+  "run_id": "JSE-SFPP-20260508-1430",
+  "run_timestamp": "2026-05-08T14:28:48.023746+00:00",
+  "report_type": "FSCA_SETTLEMENT_COMPLIANCE",
+  "data_sources": {
+    "ECS": {
+      "status": "HEALTHY",
+      "trades_processed": 8,
+      "last_update": "2026-05-08T14:28:46.133976+00:00"
+    },
+    "CIS": {
+      "status": "PARTIAL",
+      "counterparties_processed": 6,
+      "unavailable_count": 1,
+      "degraded_count": 1,
+      "last_update": "2026-05-08T14:28:48.023746+00:00"
+    },
+    "TIS": {
+      "status": "HEALTHY",
+      "integration_health": "OPERATIONAL"
+    }
+  },
+  "coverage": {
+    "total_trades": 8,
+    "total_counterparties": 7,
+    "total_exposure_zar": 319500000,
+    "t1_exposure_zar": 278000000,
+    "t2_exposure_zar": 61500000
+  },
+  "risk_assessment_summary": {
+    "critical_trades": 3,
+    "critical_exposure_zar": 210000000,
+    "high_risk_trades": 2,
+    "high_risk_exposure_zar": 60000000,
+    "systemic_stress_indicator": false,
+    "trend_vs_prior": "STABLE"
+  },
+  "interventions_regulatory_justification": [
+    {
+      "trade_id": "TRD-2001",
+      "counterparty_id": "CP-001",
+      "intervention_type": "HUMAN_ESCALATION",
+      "regulatory_basis": "JSE Rulebook Section 22 - Systemic Risk Override prevents automated LOLR despite ZAR 120M CRITICAL exposure requiring immediate intervention",
+      "fsca_compliance_note": "Liquidity risk management under FSCA Prudential Requirements"
+    },
+    {
+      "trade_id": "TRD-2007",
+      "counterparty_id": "CP-007",
+      "intervention_type": "HUMAN_ESCALATION",
+      "regulatory_basis": "Complete CIS connectivity failure creates operational risk requiring human assessment per JSE Settlement Rules Section 6.3",
+      "fsca_compliance_note": "Operational risk management under FSCA Market Conduct Rules"
+    },
+    {
+      "trade_id": "TRD-2005",
+      "counterparty_id": "CP-005",
+      "intervention_type": "HUMAN_ESCALATION",
+      "regulatory_basis": "FSCA regulatory investigation flag mandates human escalation per JSE Rulebook Section 22 - no automated intervention permitted",
+      "fsca_compliance_note": "Regulatory compliance monitoring under FSCA Market Conduct Rules"
+    },
+    {
+      "trade_id": "TRD-2002",
+      "counterparty_id": "CP-002",
+      "intervention_type": "SETTLEMENT_ROLL",
+      "regulatory_basis": "JSE Settlement Rules Section 8.2 permits settlement roll for HIGH risk with securities shortfall root cause during systemic conditions",
+      "fsca_compliance_note": "Settlement integrity protection under FSCA Settlement Rules"
+    },
+    {
+      "trade_id": "TRD-2008",
+      "counterparty_id": "CP-002",
+      "intervention_type": "SETTLEMENT_ROLL",
+      "regulatory_basis": "JSE Settlement Rules Section 8.2 - settlement roll provides operational breathing room for counterparty with recent failure history",
+      "fsca_compliance_note": "Settlement risk mitigation under FSCA Settlement Rules"
+    }
+  ],
+  "agent_decision_rationale_critical": [
+    {
+      "trade_id": "TRD-2001",
+      "counterparty_id": "CP-001",
+      "decision_rationale": "Net obligation ZAR 120M exceeds JSE CRITICAL threshold of ZAR 100M triggering immediate intervention requirement. Systemic risk flag prevents automated LOLR execution requiring human oversight despite adequate BBB+ credit rating and healthy CIS integration.",
+      "risk_factors": [
+        "net_obligation_exceeds_100M"
+      ],
+      "mitigation_applied": "Human escalation with immediate priority"
+    },
+    {
+      "trade_id": "TRD-2007",
+      "counterparty_id": "CP-007",
+      "decision_rationale": "CIS_UNAVAILABLE flag creates complete operational blind spot for ZAR 55M exposure preventing real-time risk assessment. TCP timeout since May 6th compounds uncertainty requiring immediate human intervention to establish alternative monitoring approach.",
+      "risk_factors": [
+        "CIS_UNAVAILABLE_flag"
+      ],
+      "mitigation_applied": "Human escalation for connectivity resolution"
+    },
+    {
+      "trade_id": "TRD-2005",
+      "counterparty_id": "CP-005",
+      "decision_rationale": "JSE watchlist entry due to FSCA market manipulation investigation overrides net obligation assessment per regulatory escalation rules. B+ credit rating and four recent margin calls support elevated risk classification requiring regulatory compliance oversight.",
+      "risk_factors": [
+        "JSE_watchlist_escalation"
+      ],
+      "mitigation_applied": "Regulatory compliance human escalation"
+    }
+  ],
+  "data_quality_attestation": {
+    "cis_unavailable_flags": [
+      {
+        "counterparty_id": "CP-007",
+        "description": "CIS integration timeout - counterparty data unavailable",
+        "remediation_required": true,
+        "impact_assessment": "Complete operational blind spot for ZAR 55M exposure"
+      }
+    ],
+    "cis_degraded_flags": [
+      {
+        "counterparty_id": "CP-003",
+        "description": "CIS integration degraded for counterparty",
+        "remediation_required": true,
+        "impact_assessment": "Limited real-time data availability affecting risk assessment accuracy"
+      }
+    ],
+    "data_completeness": "PARTIAL",
+    "missing_data_impact": "MEDIUM"
+  },
+  "compliance_attestation": {
+    "regulatory_framework_compliance": "FULL",
+    "jsb_settlement_rules_compliance": "FULL",
+    "fsca_market_conduct_compliance": "FULL",
+    "audit_trail_completeness": "COMPLETE",
+    "intervention_justification_adequacy": "ADEQUATE",
+    "systemic_risk_protocol_adherence": "FULL"
+  },
+  "stored_at": "2026-05-08T14:31:41.798815+00:00"
+}

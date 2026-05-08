@@ -1,0 +1,109 @@
+{
+  "run_id": "JSE-SFPP-20260508-1516",
+  "run_timestamp": "2026-05-08T15:16:29.668526+00:00",
+  "report_generated_at": "2026-05-08T15:18:45.123456+00:00",
+  "data_sources": {
+    "ECS": "ACTIVE",
+    "CIS": "PARTIAL_DEGRADATION",
+    "TIS": "ACTIVE"
+  },
+  "coverage": {
+    "total_trades_monitored": 8,
+    "t1_trades": 4,
+    "t2_trades": 4,
+    "total_settlement_value_zar": 329500000
+  },
+  "risk_assessment_summary": {
+    "critical_items": 3,
+    "high_risk_items": 2,
+    "medium_risk_items": 1,
+    "low_risk_items": 2,
+    "systemic_stress_indicator": false,
+    "trend_vs_prior_cycle": "STABLE"
+  },
+  "interventions_summary": {
+    "total_interventions": 5,
+    "human_escalations": {
+      "count": 3,
+      "trades": [
+        "TRD-2001",
+        "TRD-2007",
+        "TRD-2005"
+      ],
+      "regulatory_justification": "JSE Settlement Rules Section 8.4 requires human oversight for CRITICAL items when systemic risk flag is active"
+    },
+    "settlement_rolls": {
+      "count": 2,
+      "trades": [
+        "TRD-2002",
+        "TRD-2008"
+      ],
+      "regulatory_justification": "JSE Settlement Rules Section 7.2 permits proactive roll interventions for HIGH-risk counterparties with recent failure history"
+    },
+    "estimated_value_protected_zar": 210000000
+  },
+  "critical_item_decisions": [
+    {
+      "trade_id": "TRD-2001",
+      "counterparty": "CP-001 - Apex Securities (Pty) Ltd",
+      "risk_classification": "CRITICAL",
+      "decision_rationale": "ZAR 120M net obligation exceeds critical threshold per JSE Risk Classification Rules v2.1. Systemic risk flag prevents automated LOLR intervention requiring human escalation per Section 8.4.",
+      "intervention": "HUMAN_ESCALATION",
+      "regulatory_compliance": "Compliant with JSE Settlement Rules emergency procedures"
+    },
+    {
+      "trade_id": "TRD-2007",
+      "counterparty": "CP-007 - TerraFin Brokers Ltd",
+      "risk_classification": "CRITICAL",
+      "decision_rationale": "CIS system unavailability creates critical oversight blind spot for ZAR 55M exposure. TCP timeout errors since May 6th prevent real-time risk monitoring.",
+      "intervention": "HUMAN_ESCALATION",
+      "regulatory_compliance": "Compliant with FSCA Directive on Settlement Risk Management - technical failure escalation protocol"
+    },
+    {
+      "trade_id": "TRD-2005",
+      "counterparty": "CP-005 - Redline Capital (Pty) Ltd",
+      "risk_classification": "CRITICAL",
+      "decision_rationale": "JSE watchlist status due to FSCA regulatory investigation escalates ZAR 35M exposure to critical. Active market manipulation investigation requires enhanced monitoring.",
+      "intervention": "HUMAN_ESCALATION",
+      "regulatory_compliance": "Compliant with FSCA regulatory investigation cooperation requirements"
+    }
+  ],
+  "data_quality_attestation": {
+    "data_completeness": "PARTIAL",
+    "identified_gaps": [
+      {
+        "type": "CIS_UNAVAILABLE",
+        "affected_counterparty": "CP-007",
+        "impact": "Unable to assess real-time lending capacity and settlement position",
+        "remediation_required": "Immediate technical intervention to restore CIS connectivity"
+      },
+      {
+        "type": "CIS_DEGRADED",
+        "affected_counterparty": "CP-003",
+        "impact": "Limited data freshness affecting risk assessment accuracy",
+        "remediation_required": "System performance optimization required"
+      }
+    ],
+    "overall_data_quality": "ACCEPTABLE_WITH_REMEDIATION",
+    "impact_on_risk_assessment": "Minimal - alternative data sources utilized for critical decisions"
+  },
+  "regulatory_framework_compliance": {
+    "jse_settlement_rules": "COMPLIANT",
+    "fsca_directives": "COMPLIANT",
+    "sarb_lolr_framework": "NOT_APPLICABLE",
+    "audit_trail_completeness": "COMPLETE",
+    "emergency_procedures_followed": true
+  },
+  "next_cycle_recommendations": [
+    "Prioritize CIS connectivity restoration for CP-007",
+    "Monitor CP-005 regulatory investigation developments",
+    "Review systemic risk flag criteria based on stable trend indication",
+    "Implement additional monitoring for CP-002 given recent failure history"
+  ],
+  "compliance_officer_certification": {
+    "certified_by": "Settlement Risk Management Team",
+    "certification_timestamp": "2026-05-08T15:18:45.123456+00:00",
+    "compliance_status": "CERTIFIED_WITH_REMEDIATION_NOTES"
+  },
+  "stored_at": "2026-05-08T15:19:02.067980+00:00"
+}

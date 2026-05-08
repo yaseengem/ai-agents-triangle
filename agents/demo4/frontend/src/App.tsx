@@ -13,6 +13,8 @@ import { AuditReportPage } from './pages/AuditReportPage'
 import { RuleConfigPage } from './pages/RuleConfigPage'
 import { AlertsPage } from './pages/AlertsPage'
 import { TestRunnerPage } from './pages/TestRunnerPage'
+import { RunsPage } from './pages/RunsPage'
+import { RunDetailPage } from './pages/RunDetailPage'
 
 export { API } from './config'
 
@@ -39,6 +41,7 @@ const NAV = [
     items: [
       { path: '/monitor', label: 'Pipeline Monitor' },
       { path: '/test-runner', label: 'Test Runner' },
+      { path: '/runs', label: 'Runs' },
     ],
   },
   {
@@ -156,6 +159,8 @@ export default function App() {
             <Route path="/rules" element={<RuleConfigPage />} />
             <Route path="/alerts" element={<AlertsPage />} />
             <Route path="/test-runner" element={<TestRunnerPage />} />
+            <Route path="/runs" element={<RunsPage />} />
+            <Route path="/runs/:sessionId" element={<RunDetailPage />} />
           </Routes>
         </Shell>
       </RunContextProvider>

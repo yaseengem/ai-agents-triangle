@@ -1,14 +1,22 @@
 """
 Pipeline service layer for the Settlement Failure Prevention Agent.
 
-Manages session lifecycle, SSE event queues, human approval gates, pipeline state,
+Manages run lifecycle, SSE event queues, human approval gates, pipeline state,
 and run history aggregation for the Summary Dashboard.
+
+IMPORTANT: This service holds approval futures in a process-local dict
+(_approval_futures). The agent task awaiting approval and the /approve route
+handler that resolves it must live in the same process. The agent runs with
+a single uvicorn worker — do NOT add `--workers N` without first replacing
+the in-memory future dict with a cross-process resume mechanism (e.g. file +
+filesystem watcher, or Redis pub/sub).
 """
 from __future__ import annotations
 
 import asyncio
 import json
 import os
+import threading
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -26,10 +34,38 @@ logger = get_logger(__name__)
 _AGENT_DIR = Path(__file__).parent.parent  # agents/demo4/
 _SESSIONS_DIR = _AGENT_DIR / "data" / "sessions"
 _UPLOADS_DIR = _AGENT_DIR / "data" / "uploads"
+_RUN_SEQ_DIR = _AGENT_DIR / "data" / "_run_seq"
+
+# Run statuses persisted on meta.json
+_RUN_STATUS_NON_TERMINAL = {"pending", "queued", "running", "awaiting_approval"}
+_RUN_STATUS_TERMINAL = {"complete", "failed", "interrupted", "cancelled"}
+
+_run_seq_lock = threading.Lock()
 
 
 def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+
+def mint_run_id(now: datetime | None = None) -> str:
+    """
+    Mint a server-side run id of the form RUN-YYYYMMDD-HHMMSS-NNNN.
+    NNNN is a per-day counter persisted at data/_run_seq/YYYYMMDD.txt under a
+    threading lock. Called from create_session() so meta.run_id is set before
+    the trigger endpoint returns to the client.
+    """
+    now = now or datetime.now(timezone.utc)
+    day = now.strftime("%Y%m%d")
+    seq_path = _RUN_SEQ_DIR / f"{day}.txt"
+    with _run_seq_lock:
+        _RUN_SEQ_DIR.mkdir(parents=True, exist_ok=True)
+        try:
+            current = int(seq_path.read_text(encoding="utf-8").strip())
+        except (FileNotFoundError, ValueError):
+            current = 0
+        nxt = current + 1
+        seq_path.write_text(str(nxt), encoding="utf-8")
+    return f"RUN-{day}-{now.strftime('%H%M%S')}-{nxt:04d}"
 
 
 def _write_json(path: Path, data: dict) -> None:
@@ -60,16 +96,19 @@ class PipelineService:
 
     def create_session(self, trigger_mode: str = "api", upload_id: str | None = None) -> dict:
         session_id = str(uuid.uuid4())
-        now = _now_iso()
+        now_dt = datetime.now(timezone.utc)
+        now = now_dt.isoformat()
+        run_id = mint_run_id(now_dt)
         meta = {
             "session_id": session_id,
+            "run_id": run_id,
             "trigger_mode": trigger_mode,
             "upload_id": upload_id,
-            "status": "pending",
-            "run_id": None,
+            "status": "queued",
             "execution_status": None,
             "created_at": now,
             "completed_at": None,
+            "event_count": 0,
             "critical_count": 0,
             "high_count": 0,
             "medium_count": 0,
@@ -151,30 +190,89 @@ class PipelineService:
         self._pipeline_states[session_id] = state
         _write_json(_SESSIONS_DIR / f"{session_id}_state.json", state)
 
-    # ── SSE queue ─────────────────────────────────────────────────────────────
+    # ── SSE queue + event log (events.jsonl append-only) ─────────────────────
 
     def get_or_create_queue(self, session_id: str) -> asyncio.Queue:
         if session_id not in self._queues:
             self._queues[session_id] = asyncio.Queue()
         return self._queues[session_id]
 
+    def _next_event_id(self, session_id: str) -> int:
+        meta = self._sessions.get(session_id) or _read_json(_SESSIONS_DIR / f"{session_id}_meta.json") or {}
+        n = int(meta.get("event_count", 0)) + 1
+        meta["event_count"] = n
+        self._sessions[session_id] = meta
+        # Persist meta change inline so a crash mid-run preserves event_count
+        _write_json(_SESSIONS_DIR / f"{session_id}_meta.json", meta)
+        return n
+
+    def _append_event_jsonl(self, session_id: str, event_with_id: dict) -> None:
+        path = _SESSIONS_DIR / f"{session_id}_events.jsonl"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with open(path, "a", encoding="utf-8") as f:
+            f.write(json.dumps(event_with_id, ensure_ascii=False) + "\n")
+
     async def emit(self, session_id: str, event: dict) -> None:
         q = self.get_or_create_queue(session_id)
-        await q.put(event)
-        if event.get("type") != "heartbeat":
-            log = self._event_logs.setdefault(session_id, [])
-            log.append({**event, "_ts": _now_iso()})
-            _write_json(_SESSIONS_DIR / f"{session_id}_events.json", {"events": log})
+        # Heartbeats: live-only, never persisted, never id-stamped
+        if event.get("type") == "heartbeat":
+            await q.put(event)
+            return
+        eid = self._next_event_id(session_id)
+        record = {"id": eid, "ts": _now_iso(), **event}
+        self._append_event_jsonl(session_id, record)
+        self._event_logs.setdefault(session_id, []).append(record)
+        await q.put(record)
 
-    def get_event_log(self, session_id: str) -> list:
-        if session_id in self._event_logs:
+    def get_event_log(self, session_id: str, after_id: int = 0) -> list:
+        """
+        Return persisted events for a session, optionally filtered to id > after_id.
+        Reads events.jsonl primarily; falls back to legacy events.json (whole-file JSON
+        with {"events": [...]}) so older runs still display in RunsPage.
+        """
+        if session_id in self._event_logs and after_id == 0:
             return self._event_logs[session_id]
-        data = _read_json(_SESSIONS_DIR / f"{session_id}_events.json")
-        return data.get("events", []) if data else []
 
-    def emit_threadsafe(self, session_id: str, event: dict, loop: asyncio.AbstractEventLoop) -> None:
-        q = self.get_or_create_queue(session_id)
-        loop.call_soon_threadsafe(q.put_nowait, event)
+        events: list[dict] = []
+        jsonl_path = _SESSIONS_DIR / f"{session_id}_events.jsonl"
+        if jsonl_path.exists():
+            with open(jsonl_path, "r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    try:
+                        rec = json.loads(line)
+                    except json.JSONDecodeError:
+                        continue
+                    if rec.get("id", 0) > after_id:
+                        events.append(rec)
+            return events
+
+        # Legacy fallback: events.json from before the jsonl conversion. These records
+        # have no "id" field — we synthesise a position-based id so the SSE replay
+        # protocol still works (Last-Event-ID will just deliver everything if absent).
+        legacy = _read_json(_SESSIONS_DIR / f"{session_id}_events.json")
+        if legacy:
+            for i, rec in enumerate(legacy.get("events", []), start=1):
+                if i > after_id:
+                    events.append({"id": i, **rec})
+        return events
+
+    # ── Status state machine ─────────────────────────────────────────────────
+
+    def set_status(self, session_id: str, status: str, **extra: Any) -> None:
+        """
+        Update meta.status (and optionally other fields) and persist atomically.
+        Use the canonical status values:
+          queued | running | awaiting_approval | complete | failed | interrupted | cancelled
+        """
+        meta = self._sessions.get(session_id) or _read_json(_SESSIONS_DIR / f"{session_id}_meta.json") or {}
+        meta["status"] = status
+        for k, v in extra.items():
+            meta[k] = v
+        self._sessions[session_id] = meta
+        _write_json(_SESSIONS_DIR / f"{session_id}_meta.json", meta)
 
     # ── Human approval gate ───────────────────────────────────────────────────
 
@@ -312,3 +410,110 @@ class PipelineService:
             },
             "trend_data": trend_data,
         }
+
+    # ── Runs page filters + detail ────────────────────────────────────────────
+
+    def list_runs(
+        self,
+        *,
+        status: list[str] | None = None,
+        trigger_mode: list[str] | None = None,
+        run_id_contains: str | None = None,
+        started_after: str | None = None,
+        started_before: str | None = None,
+        has_systemic_stress: bool | None = None,
+        sort: str = "created_at:desc",
+        limit: int = 50,
+        offset: int = 0,
+    ) -> dict:
+        """
+        Filter+sort+paginate persisted runs for the RunsPage.
+        File-scan is fine up to a few thousand runs; revisit with an index file
+        if list_sessions becomes slow.
+        """
+        sessions = self.list_sessions()
+        out: list[dict] = []
+        for s in sessions:
+            if status and s.get("status") not in status:
+                continue
+            if trigger_mode and s.get("trigger_mode") not in trigger_mode:
+                continue
+            rid = s.get("run_id") or ""
+            if run_id_contains and run_id_contains.lower() not in rid.lower():
+                continue
+            created = s.get("created_at") or ""
+            if started_after and created < started_after:
+                continue
+            if started_before and created > started_before:
+                continue
+            if has_systemic_stress is True and not s.get("systemic_stress"):
+                continue
+            if has_systemic_stress is False and s.get("systemic_stress"):
+                continue
+            out.append(s)
+
+        # sort
+        sort_field, _, sort_dir = sort.partition(":")
+        sort_dir = sort_dir or "desc"
+        reverse = sort_dir == "desc"
+        try:
+            out.sort(key=lambda r: (r.get(sort_field) or ""), reverse=reverse)
+        except TypeError:
+            out.sort(key=lambda r: str(r.get(sort_field) or ""), reverse=reverse)
+
+        total = len(out)
+        page = out[offset: offset + limit]
+        return {"total": total, "limit": limit, "offset": offset, "runs": page}
+
+    def get_run_detail(self, session_id: str, events_limit: int = 200) -> dict | None:
+        """Aggregate everything the RunDetailPage needs: meta + state + recent events."""
+        meta = self.get_session(session_id)
+        if meta is None:
+            return None
+        state = self.get_pipeline_state(session_id) or {}
+        events = self.get_event_log(session_id)
+        if events_limit and len(events) > events_limit:
+            events = events[-events_limit:]
+        return {
+            "meta": meta,
+            "state": state,
+            "events": events,
+            "event_count": meta.get("event_count", len(events)),
+        }
+
+    # ── Crash-recovery sweep (called from FastAPI startup hook) ──────────────
+
+    def sweep_stranded_runs(self) -> int:
+        """
+        On process startup, mark any run whose status is non-terminal as 'interrupted'.
+        Single-uvicorn-worker invariant: no other process owns these runs, so we can
+        unilaterally claim and rewrite their meta files.
+        Returns the number of runs swept.
+        """
+        _SESSIONS_DIR.mkdir(parents=True, exist_ok=True)
+        swept = 0
+        now = _now_iso()
+        for meta_path in _SESSIONS_DIR.glob("*_meta.json"):
+            meta = _read_json(meta_path)
+            if not meta:
+                continue
+            current = meta.get("status")
+            if current in _RUN_STATUS_NON_TERMINAL:
+                meta["status"] = "interrupted"
+                meta["execution_status"] = "INTERRUPTED"
+                meta["completed_at"] = now
+                _write_json(meta_path, meta)
+                # Append a final marker event so RunDetailPage's timeline shows the death.
+                eid = int(meta.get("event_count", 0)) + 1
+                meta["event_count"] = eid
+                _write_json(meta_path, meta)
+                self._append_event_jsonl(meta["session_id"], {
+                    "id": eid, "ts": now, "type": "run-interrupted",
+                    "reason": "process_died_before_completion", "prior_status": current,
+                })
+                swept += 1
+                logger.warning("[SERVICE] run_interrupted_on_startup  session_id=%s prior_status=%s",
+                               meta.get("session_id"), current)
+        if swept:
+            logger.info("[SERVICE] sweep_stranded_runs  swept=%d", swept)
+        return swept

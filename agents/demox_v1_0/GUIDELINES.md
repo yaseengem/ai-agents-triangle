@@ -1,20 +1,29 @@
-# New Agent Guidelines
+# New Agent Guidelines (Template v1.0)
+
+This is the v1.0 template. Future template versions live alongside as
+`agents/demox_v2_0/`, `agents/demox_v3_0/`, etc. Pick the latest version
+when starting a new agent.
 
 ## Starting a new agent
 
-1. Copy this folder: `cp -r agents/demox agents/demoN`
-2. Update `metadata.yaml` — set `name`, `description`, `use_case`, `domain`, `api_port`, `frontend_port`, `status: stub`
-3. Write a spec in `specs/` first (see `specs/_template.md`)
-4. Implement agentic logic inside `agentic/`
-5. Wire up the FastAPI app inside `apis/`
-6. Add your frontend inside `frontend/` (standalone Vite project)
+1. Copy this folder: `cp -r agents/demox_v1_0 agents/demoN`
+2. Update `metadata.yaml`:
+   - set `name`, `description`, `use_case`, `domain`, `api_port`, `frontend_port`
+   - change `status: template` → `status: stub` (or `active`)
+   - update `entry_point` to `agents.demoN.apis.main:app` (use the new folder name)
+   - keep `template_version: "1.0"` so we can track which template version this agent inherits from
+3. Update Python module strings inside the new folder: any `agents.demox_v1_0.*` → `agents.demoN.*`
+4. Write a spec in `specs/` first (see `specs/_template.md`)
+5. Implement agentic logic inside `agentic/`
+6. Wire up the FastAPI app inside `apis/`
+7. Add your frontend inside `frontend/` (standalone Vite project)
 
 ## Folder map
 
 ```
 agents/demoN/
 ├── metadata.yaml          # agent identity — read by platform scanner and main.py
-├── main.py                # starts API + frontend (copy from demox, unchanged)
+├── main.py                # starts API + frontend (copy from demox_v1_0, unchanged)
 ├── GUIDELINES.md          # (remove from your copy once read)
 │
 ├── agentic/               # all AI/agent code lives here
@@ -57,7 +66,7 @@ agents/demoN/
 
 ## Key rules (from CLAUDE.md)
 
-- **Never modify demox** — it is the template. Copy it.
+- **Never modify demox_v1_0** (or any demox_vN_M) — they are templates. Copy them.
 - `metadata.yaml status: template` → the platform scanner skips this agent.
 - `main.py` is shared logic — do not customise it per agent.
 - Memory backend is at `agentic/memory_backend.py` and stores to `data/memory/`.

@@ -9,7 +9,7 @@ import uuid
 from pathlib import Path
 from typing import Optional
 
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, File, Form, Header, HTTPException, Query, UploadFile
 from fastapi.responses import StreamingResponse
 
 from .schemas import ApprovalRequest, RunRequest, SessionSummary
@@ -87,11 +87,17 @@ async def run(req: RunRequest):
     meta = service.create_session(trigger_mode=req.mode, upload_id=req.upload_id)
     session_id = meta["session_id"]
 
-    # Start pipeline as background asyncio task
+    # Start pipeline as background asyncio task — detached from the HTTP request,
+    # so client disconnect (refresh, navigation) does NOT cancel the run.
     asyncio.create_task(run_pipeline(session_id, trigger_input, service))
-    logger.info("[ROUTE] pipeline_started  session_id=%s", session_id)
+    logger.info("[ROUTE] pipeline_started  session_id=%s run_id=%s", session_id, meta["run_id"])
 
-    return {"session_id": session_id, "status": "running", "created_at": meta["created_at"]}
+    return {
+        "session_id": session_id,
+        "run_id": meta["run_id"],
+        "status": meta["status"],
+        "created_at": meta["created_at"],
+    }
 
 
 def _parse_csv_upload(content: str) -> dict:
@@ -114,30 +120,73 @@ def _parse_csv_upload(content: str) -> dict:
 
 # ── Monitor (SSE stream) ──────────────────────────────────────────────────────
 
+_TERMINAL_RUN_STATUSES = {"complete", "failed", "interrupted", "cancelled"}
+
+
 @router.get("/monitor/{session_id}")
-async def monitor(session_id: str):
+async def monitor(session_id: str, last_event_id: Optional[str] = Header(None, alias="Last-Event-ID")):
     """
     Server-Sent Events stream for a pipeline run.
 
-    Connect after POST /run. Events are emitted for each pipeline step,
-    tool call, risk item, intervention decision, and human approval gate.
-    Stream ends with {"type": "done"} or {"type": "error"}.
+    Connect after POST /run. Events are emitted for each pipeline step, tool call,
+    risk item, intervention decision, and human approval gate. Stream ends with
+    {"type": "done"} or {"type": "error"}.
+
+    Reconnect-resume: on reconnect, the browser auto-sends `Last-Event-ID` (the
+    monotonic id we stamp on each persisted event). The handler replays history
+    past that cursor, then attaches to the live in-memory queue. The first
+    connection in a fresh process sends Last-Event-ID=0 implicitly and replays
+    everything that's already been written to events.jsonl.
     """
     session = service.get_session(session_id)
     if session is None:
         raise HTTPException(status_code=404, detail="Session not found")
 
+    try:
+        cursor = int(last_event_id) if last_event_id else 0
+    except ValueError:
+        cursor = 0
+
     async def event_stream():
+        # 1) Replay persisted events past the cursor.
+        history = service.get_event_log(session_id, after_id=cursor)
+        for record in history:
+            eid = record.get("id")
+            if eid is None:
+                yield f"data: {json.dumps(record)}\n\n"
+            else:
+                yield f"id: {eid}\ndata: {json.dumps(record)}\n\n"
+
+        # 2) If the run is already terminal AND we've emitted everything, send a
+        #    terminal marker and close. The browser stops auto-reconnecting once
+        #    the connection ends after a `done` event.
+        meta = service.get_session(session_id) or {}
+        if meta.get("status") in _TERMINAL_RUN_STATUSES:
+            event_count = int(meta.get("event_count", 0))
+            if cursor + len(history) >= event_count:
+                yield f"data: {json.dumps({'type': 'already-complete', 'status': meta.get('status')})}\n\n"
+                return
+
+        # 3) Attach to live queue for in-progress runs. We drain the queue
+        #    skipping anything we've already replayed (could happen if the
+        #    queue was populated faster than the file was flushed in tests).
         queue = service.get_or_create_queue(session_id)
-        import json as _json
+        seen_ids: set[int] = {r.get("id") for r in history if isinstance(r.get("id"), int)}
         while True:
             try:
-                event = await asyncio.wait_for(queue.get(), timeout=300)
+                event = await asyncio.wait_for(queue.get(), timeout=30)
             except asyncio.TimeoutError:
-                yield f"data: {_json.dumps({'type': 'heartbeat'})}\n\n"
+                yield f"data: {json.dumps({'type': 'heartbeat'})}\n\n"
                 continue
-            yield f"data: {_json.dumps(event)}\n\n"
-            if event.get("type") in ("done", "error"):
+            eid = event.get("id") if isinstance(event, dict) else None
+            if isinstance(eid, int):
+                if eid in seen_ids or eid <= cursor:
+                    continue
+                seen_ids.add(eid)
+                yield f"id: {eid}\ndata: {json.dumps(event)}\n\n"
+            else:
+                yield f"data: {json.dumps(event)}\n\n"
+            if isinstance(event, dict) and event.get("type") in ("done", "error"):
                 break
 
     return StreamingResponse(
@@ -240,3 +289,56 @@ def get_summary():
     Includes risk distribution by run, intervention breakdown, and trend data.
     """
     return service.get_summary()
+
+
+# ── Runs page (filters + detail) ─────────────────────────────────────────────
+
+def _csv_or_none(s: Optional[str]) -> Optional[list[str]]:
+    if not s:
+        return None
+    parts = [p.strip() for p in s.split(",") if p.strip()]
+    return parts or None
+
+
+@router.get("/runs")
+def list_runs(
+    status: Optional[str] = Query(None, description="Comma-separated list of statuses"),
+    trigger_mode: Optional[str] = Query(None, description="Comma-separated list of trigger modes"),
+    run_id_contains: Optional[str] = None,
+    started_after: Optional[str] = None,
+    started_before: Optional[str] = None,
+    has_systemic_stress: Optional[bool] = None,
+    sort: str = "created_at:desc",
+    limit: int = 50,
+    offset: int = 0,
+):
+    """
+    Filter+paginate runs for the RunsPage. All filters are optional and combined
+    with AND semantics. Multi-value filters (status, trigger_mode) accept
+    comma-separated strings.
+    """
+    return service.list_runs(
+        status=_csv_or_none(status),
+        trigger_mode=_csv_or_none(trigger_mode),
+        run_id_contains=run_id_contains,
+        started_after=started_after,
+        started_before=started_before,
+        has_systemic_stress=has_systemic_stress,
+        sort=sort,
+        limit=max(1, min(limit, 500)),
+        offset=max(0, offset),
+    )
+
+
+@router.get("/runs/{session_id}/detail")
+def get_run_detail(session_id: str, events_limit: int = 200):
+    """
+    Aggregated payload for the RunDetailPage:
+    - meta (run-level summary, status, run_id)
+    - state (pipeline steps, pending_approvals, intervention_plan, fsca_report)
+    - events (most recent N events from events.jsonl)
+    """
+    detail = service.get_run_detail(session_id, events_limit=events_limit)
+    if detail is None:
+        raise HTTPException(status_code=404, detail="Run not found")
+    return detail

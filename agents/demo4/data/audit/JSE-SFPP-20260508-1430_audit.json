@@ -1,0 +1,56 @@
+[
+  {
+    "timestamp": "2026-05-08T14:28:48.023746+00:00",
+    "agent_name": "Settlement Exposure Agent",
+    "action_taken": "EXPOSURE_SNAPSHOT_GENERATED",
+    "input_summary": "ECS position data for 7 counterparties with T+1 (4) and T+2 (4) trades totaling ZAR 319.5M exposure",
+    "output_summary": "Successfully processed 8 trades across 7 counterparties identifying 3 large exposure flags for CP-001, CP-002, CP-007",
+    "rule_applied": "Large exposure threshold > ZAR 50M",
+    "regulatory_basis": null
+  },
+  {
+    "timestamp": "2026-05-08T14:29:15.156234+00:00",
+    "agent_name": "Risk Scoring Agent",
+    "action_taken": "RISK_CLASSIFICATION_APPLIED",
+    "input_summary": "8 settlement trades analyzed against JSE risk classification rules",
+    "output_summary": "Generated watchlist with 3 CRITICAL, 2 HIGH, 1 MEDIUM, 2 LOW risk classifications",
+    "rule_applied": "JSE Settlement Risk Classification Framework",
+    "regulatory_basis": "JSE Settlement Rules Section 4.1"
+  },
+  {
+    "timestamp": "2026-05-08T14:29:32.445877+00:00",
+    "agent_name": "Counterparty Assessment Agent",
+    "action_taken": "COUNTERPARTY_RISK_ASSESSMENT",
+    "input_summary": "Deep assessment of 4 counterparties with CRITICAL/HIGH risk classifications",
+    "output_summary": "Identified root causes: CP-001 LIQUIDITY, CP-007 CIS_CONNECTIVITY, CP-005 REGULATORY_FLAG, CP-002 SECURITIES_SHORTFALL",
+    "rule_applied": "Counterparty Risk Assessment Framework",
+    "regulatory_basis": "FSCA Market Conduct Rules"
+  },
+  {
+    "timestamp": "2026-05-08T14:29:48.778901+00:00",
+    "agent_name": "Intervention Planning Agent",
+    "action_taken": "INTERVENTION_PLAN_GENERATED",
+    "input_summary": "5 trades requiring intervention with systemic_risk_flag=true condition",
+    "output_summary": "Planned 3 HUMAN_ESCALATION and 2 SETTLEMENT_ROLL interventions totaling ZAR 140,000 estimated cost",
+    "rule_applied": "JSE Rulebook Section 22 - Systemic Risk Override",
+    "regulatory_basis": "JSE Settlement Rules Section 8.2"
+  },
+  {
+    "timestamp": "2026-05-08T14:30:12.334556+00:00",
+    "agent_name": "LOLR Execution Agent",
+    "action_taken": "LOLR_EXECUTION_SKIPPED",
+    "input_summary": "No LOLR_TRIGGER interventions in execution plan",
+    "output_summary": "Agent execution bypassed - no LOLR interventions required",
+    "rule_applied": null,
+    "regulatory_basis": null
+  },
+  {
+    "timestamp": "2026-05-08T14:30:25.667823+00:00",
+    "agent_name": "Settlement Roll Agent",
+    "action_taken": "ROLL_EXECUTION_SKIPPED",
+    "input_summary": "2 SETTLEMENT_ROLL interventions identified but not executed due to systemic_risk_flag",
+    "output_summary": "Roll interventions deferred pending human approval per systemic risk protocol",
+    "rule_applied": "Systemic Risk Override Protocol",
+    "regulatory_basis": "JSE Settlement Rules Section 8.2"
+  }
+]

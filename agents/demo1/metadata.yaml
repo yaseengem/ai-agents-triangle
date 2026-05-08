@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../../schemas/agent-metadata.schema.json
 name: Claim Processing Agent
 description: >
   Automates end-to-end health insurance claims processing for carriers and
@@ -14,3 +15,4 @@ entry_point: "agents.demo1.apis.main:app"
 api_version: "2.0.0"
 status: active
 version: "1.0.0"
+template_version: "1.0"

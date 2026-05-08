@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../../schemas/agent-metadata.schema.json
 name: Settlement Failure Prevention Agent
 description: >
   Real-time settlement failure prediction and prevention system for JSE (Johannesburg
@@ -16,3 +17,4 @@ entry_point: "agents.demo4.apis.main:app"
 api_version: "1.0.0"
 status: active
 version: "1.0.0"
+template_version: "1.0"

@@ -85,6 +85,7 @@ def scan_agents(probe_live: bool = True) -> list[AgentSummary]:
             frontend_port=meta["frontend_port"],
             status=meta.get("status", "stub"),
             version=meta.get("version", "0.0.0"),
+            template_version=meta.get("template_version"),
             live_status=live_status,
         ))
 
@@ -110,6 +111,7 @@ def get_agent_detail(agent_id: str, probe_live: bool = True) -> AgentDetail | No
         frontend_port=meta["frontend_port"],
         status=meta.get("status", "stub"),
         version=meta.get("version", "0.0.0"),
+        template_version=meta.get("template_version"),
         live_status=live_status,
         entry_point=meta.get("entry_point", ""),
         api_version=meta.get("api_version", ""),

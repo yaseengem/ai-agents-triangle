@@ -163,7 +163,8 @@ async def run_pipeline(session_id: str, trigger_input: dict, service: PipelineSe
     pipeline_ok = True
     execution_status = "SUCCESS"
 
-    service.update_session(session_id, status="running")
+    service.set_status(session_id, "running",
+                       started_at=datetime.now(timezone.utc).isoformat())
     service.set_pipeline_field(session_id, status="running")
 
     # ── Step 1: Data Ingestion ─────────────────────────────────────────────────
@@ -552,6 +553,12 @@ async def run_pipeline(session_id: str, trigger_input: dict, service: PipelineSe
                             "reason": "Requires human approval per JSE rules",
                         }
                         service.add_pending_approval(session_id, approval_payload)
+                        # Persist run-level state so EscalationsPage can render the
+                        # approve/reject button even after a page reload (independent
+                        # of whether the SSE stream is still connected).
+                        service.set_status(session_id, "awaiting_approval")
+                        await emit({"type": "status-change", "status": "awaiting_approval",
+                                    "item_id": item_id})
                         await emit(approval_payload)
                         logger.info("[BRIDGE] awaiting_approval  session_id=%s item_id=%s", session_id, item_id)
 
@@ -564,6 +571,11 @@ async def run_pipeline(session_id: str, trigger_input: dict, service: PipelineSe
                                         "message": "Approval timeout — item escalated to human review"})
 
                         service.remove_pending_approval(session_id, item_id)
+                        # Flip back to running for the rest of the pipeline. If more
+                        # items still need approval, the next loop iteration will set
+                        # awaiting_approval again before the await.
+                        service.set_status(session_id, "running")
+                        await emit({"type": "status-change", "status": "running"})
                         if decision == "approve":
                             approved_items.append({**item, "requires_human_approval": False})
                             await emit({"type": "approval-decision", "item_id": item_id, "decision": "approved"})
@@ -664,7 +676,11 @@ async def run_pipeline(session_id: str, trigger_input: dict, service: PipelineSe
         for ev in _reasoning_entries(parsed7, 7):
             await emit(ev)
 
-        run_id = pipeline_summary.get("run_id", f"JSE-SFPP-{datetime.now().strftime('%Y%m%d-%H%M')}")
+        # Run ID is canonical from create_session — never overwrite it with the LLM's
+        # suggestion (it can be missing or arbitrary). Surface the LLM hint separately
+        # for audit-trail visibility but keep meta.run_id as the authoritative ID.
+        meta_run_id = service.get_session(session_id).get("run_id")
+        llm_run_id_hint = pipeline_summary.get("run_id")
         ops_summary = pipeline_summary.get("operations_summary", {})
 
         service.set_pipeline_field(session_id,
@@ -673,19 +689,18 @@ async def run_pipeline(session_id: str, trigger_input: dict, service: PipelineSe
                                    completed_at=datetime.now(timezone.utc).isoformat(),
                                    operations_summary=ops_summary)
 
-        service.update_session(session_id,
-                               status="complete",
-                               execution_status=execution_status,
-                               run_id=run_id,
-                               completed_at=datetime.now(timezone.utc).isoformat(),
-                               interventions_executed=ops_summary.get("total_interventions", 0))
+        service.set_status(session_id, "complete",
+                           execution_status=execution_status,
+                           completed_at=datetime.now(timezone.utc).isoformat(),
+                           interventions_executed=ops_summary.get("total_interventions", 0),
+                           llm_run_id_hint=llm_run_id_hint)
 
-        summary7 = f"Run {run_id} — {execution_status}"
+        summary7 = f"Run {meta_run_id} — {execution_status}"
         await step_complete(7, summary7, parsed7)
 
         await emit({
             "type": "done",
-            "run_id": run_id,
+            "run_id": meta_run_id,
             "execution_status": execution_status,
             "summary": ops_summary,
             "systemic_stress": ctx.get("systemic_risk_flag", False),
@@ -693,9 +708,14 @@ async def run_pipeline(session_id: str, trigger_input: dict, service: PipelineSe
     except Exception as e:
         logger.error("[BRIDGE] step7_failed  session_id=%s error=%s", session_id, e)
         await step_fail(7, str(e))
+        meta_run_id = service.get_session(session_id).get("run_id")
+        service.set_status(session_id, "failed",
+                           execution_status="FAILED",
+                           completed_at=datetime.now(timezone.utc).isoformat(),
+                           error=str(e))
         await emit({
             "type": "done",
-            "run_id": f"JSE-SFPP-{datetime.now().strftime('%Y%m%d-%H%M')}",
+            "run_id": meta_run_id,
             "execution_status": "FAILED",
             "error": str(e),
         })

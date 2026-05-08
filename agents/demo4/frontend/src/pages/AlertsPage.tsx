@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useRun } from '../context/RunContext'
+import { formatDateTime } from '../lib/datetime'
 
 const SEV_COLORS: Record<string, string> = { HIGH: 'var(--rd)', MEDIUM: 'var(--am)', LOW: 'var(--ac)' }
 const SEV_BG: Record<string, string> = { HIGH: 'var(--rdd)', MEDIUM: 'var(--amd)', LOW: 'var(--acd)' }
@@ -60,7 +61,7 @@ export function AlertsPage() {
                       <span style={{ fontSize: 11, color: 'var(--t2)' }}>Step {alert.source_step}</span>
                     )}
                     <span style={{ fontSize: 11, color: 'var(--t3)', marginLeft: 'auto' }}>
-                      {new Date(alert.timestamp).toISOString().slice(0, 19).replace('T', ' ')}
+                      {formatDateTime(alert.timestamp)}
                     </span>
                   </div>
                   <div style={{ fontSize: 13, color: 'var(--t)', fontWeight: 500 }}>{alert.message}</div>
@@ -117,7 +118,7 @@ export function AlertsPage() {
                       {alert.session_id?.slice(0, 8) || '—'}
                     </td>
                     <td style={{ padding: '9px 14px', color: 'var(--t3)', fontSize: 11 }}>
-                      {new Date(alert.timestamp).toISOString().slice(0, 19).replace('T', ' ')}
+                      {formatDateTime(alert.timestamp)}
                     </td>
                   </tr>
                 ))}

@@ -42,15 +42,19 @@ Ports are declared in each agent's `metadata.yaml` (`api_port`, `frontend_port`)
 
 - Agent folders are `demo1`, `demo2`, `demo3` — **never** named after their use case.
 - Display names come from `metadata.yaml` (`name` field): Calvin, Arvo, Lance.
-- The template folder is `demox` — copy it to create a new agent.
+- The template folder is `demox_v1_0` (current template version 1.0). Future template versions live alongside as `demox_v2_0`, `demox_v3_0`, etc. Underscores keep the folder name a valid Python module path so `entry_point` works after a copy.
 
 ---
 
-## demox — the agent template
+## demox_v1_0 — the agent template (and future versions)
 
-- `demox` is a template. **Never modify it. Never start it.**
-- `demox/metadata.yaml` has `status: template` — scripts skip it automatically.
-- To add a new agent: copy `demox` → `demoN`, update `metadata.yaml`.
+- `demox_v1_0` is the v1.0 template. **Never modify it. Never start it.** Same rule for `demox_v2_0` and any future version.
+- `demox_vN_M/metadata.yaml` has `status: template` — the scanner skips ANY agent whose status is `template`, regardless of folder name. Don't rely on a folder-name check; the test in `app/tests/test_scanner_template_skip.py` enforces this.
+- Every agent's `metadata.yaml` carries `template_version: "X.Y"` recording which template version it inherits from. Set it when you copy the template; don't change it later.
+- To add a new agent:
+  1. `cp -r agents/demox_v1_0 agents/demoN` (or whichever template version you want to inherit)
+  2. Update `metadata.yaml`: name, description, use_case, domain, api_port, frontend_port, set `status: stub`, set `entry_point: agents.demoN.apis.main:app`, keep `template_version`.
+  3. Find-and-replace `agents.demox_v1_0.` → `agents.demoN.` in the new folder's Python imports.
 
 ---
 

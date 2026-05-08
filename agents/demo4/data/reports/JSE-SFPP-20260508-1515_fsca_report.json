@@ -1,0 +1,89 @@
+{
+  "run_id": "JSE-SFPP-20260508-1515",
+  "run_timestamp": "2026-05-08T15:15:00.704953+00:00",
+  "report_type": "FSCA_SETTLEMENT_FAILURE_PREVENTION_COMPLIANCE",
+  "regulatory_framework": "Financial Sector Conduct Authority Act 9 of 2017",
+  "data_sources": {
+    "ECS": "Equities Clearing System - settlement positions and exposures",
+    "CIS": "Counterparty Information System - credit and operational profiles",
+    "TIS": "Trade Information System - transaction details and settlement windows"
+  },
+  "coverage": {
+    "total_trades_monitored": 8,
+    "t1_settlements": 4,
+    "t2_settlements": 4,
+    "total_obligation_value_zar": 319500000,
+    "counterparties_assessed": 7
+  },
+  "risk_assessment_summary": {
+    "critical_risk_trades": 3,
+    "high_risk_trades": 2,
+    "medium_risk_trades": 1,
+    "low_risk_trades": 2,
+    "systemic_stress_indicator": false,
+    "large_exposures_identified": [
+      "CP-001: ZAR 120M",
+      "CP-002: ZAR 60M",
+      "CP-007: ZAR 55M"
+    ]
+  },
+  "interventions_summary": {
+    "human_escalations": {
+      "count": 3,
+      "trades": [
+        "TRD-2001",
+        "TRD-2007",
+        "TRD-2005"
+      ],
+      "regulatory_justification": "JSE Rulebook Section 22 requires human oversight for CRITICAL classifications during systemic risk conditions and regulatory investigations"
+    },
+    "settlement_rolls": {
+      "count": 2,
+      "trades": [
+        "TRD-2002",
+        "TRD-2008"
+      ],
+      "regulatory_justification": "Automated intervention authorized under FSCA Guidelines for securities shortfall mitigation"
+    },
+    "total_estimated_intervention_cost_zar": 140000
+  },
+  "critical_item_rationale": {
+    "TRD-2001": {
+      "classification": "CRITICAL",
+      "justification": "Net obligation ZAR 120M exceeds regulatory threshold during market volatility",
+      "intervention": "HUMAN_ESCALATION",
+      "regulatory_basis": "Large exposure monitoring per FSCA prudential requirements"
+    },
+    "TRD-2007": {
+      "classification": "CRITICAL",
+      "justification": "CIS system unavailability creates monitoring blind spot for ZAR 55M exposure",
+      "intervention": "HUMAN_ESCALATION",
+      "regulatory_basis": "Operational risk management per FSCA oversight requirements"
+    },
+    "TRD-2005": {
+      "classification": "CRITICAL",
+      "justification": "Active FSCA investigation creates elevated compliance risk requiring enhanced monitoring",
+      "intervention": "HUMAN_ESCALATION",
+      "regulatory_basis": "Regulatory flag compliance per FSCA enforcement procedures"
+    }
+  },
+  "data_quality_attestation": {
+    "data_completeness": "PARTIAL_GAP",
+    "gaps_identified": [
+      {
+        "flag": "CIS_UNAVAILABLE",
+        "counterparty": "CP-007",
+        "impact": "Unable to verify lending positions and credit metrics for ZAR 55M exposure",
+        "remediation_required": "CIS connectivity restoration before next monitoring cycle"
+      }
+    ],
+    "system_availability": {
+      "ECS": "AVAILABLE",
+      "CIS": "DEGRADED - CP-007 timeout",
+      "TIS": "AVAILABLE"
+    }
+  },
+  "compliance_officer_attestation": "This report confirms SFPP system compliance with FSCA settlement failure prevention requirements. All CRITICAL exposures properly escalated per regulatory framework. Data quality gap for CP-007 flagged for remediation.",
+  "next_monitoring_cycle": "2026-05-09T15:15:00.000000+00:00",
+  "stored_at": "2026-05-08T15:17:53.287097+00:00"
+}

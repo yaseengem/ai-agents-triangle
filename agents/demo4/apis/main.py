@@ -67,6 +67,23 @@ app.include_router(test_router)
 init_test_service(service)
 
 
+@app.on_event("startup")
+async def _sweep_stranded_runs_on_startup():
+    """
+    Mark any run whose status is non-terminal as 'interrupted'. The agent runs
+    with a single uvicorn worker, so on startup no other process can own these
+    runs — we can claim them safely. Without this, a process restart leaves runs
+    visible as 'running' forever.
+    """
+    swept = service.sweep_stranded_runs()
+    if swept:
+        # Logged at WARNING by the service itself; nothing more to do here.
+        pass
+
+
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("agents.demo4.apis.main:app", host="0.0.0.0", port=_meta.get("api_port", 3004), reload=True)
+    # IMPORTANT: keep workers=1. The HITL approval mechanism uses an in-memory
+    # asyncio.Future dict (PipelineService._approval_futures) — cross-worker
+    # resume is not implemented.
+    uvicorn.run("agents.demo4.apis.main:app", host="0.0.0.0", port=_meta.get("api_port", 3004), reload=True, workers=1)

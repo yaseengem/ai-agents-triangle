@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../../schemas/agent-metadata.schema.json
 name: Loan Processing Agent
 description: >
   Automates retail and small-business loan origination for banks and
@@ -15,3 +16,4 @@ entry_point: "agents.demo3.apis.main:app"
 api_version: "1.0.0"
 status: stub
 version: "0.1.0"
+template_version: "1.0"

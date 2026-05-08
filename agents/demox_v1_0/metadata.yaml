@@ -1,4 +1,5 @@
-name: DemoX
+# yaml-language-server: $schema=../../schemas/agent-metadata.schema.json
+name: DemoX v1.0
 # DESCRIPTION GUIDELINES (replace this block when creating a real agent):
 # Write 4-6 sentences that cover:
 #   1. The industry vertical and type of organisation this serves.
@@ -13,13 +14,15 @@ name: DemoX
 #    risk against configurable rule sets, flags edge cases for human review,
 #    and produces a recommended premium or decline decision with an audit trail."
 description: >
-  Template agent — copy this folder to demoN to create a new agent.
-  Never modify this folder directly.
+  Template agent v1.0 — copy this folder to demoN to create a new agent.
+  Never modify this folder directly. Future template versions live alongside
+  as demox_v2_0/, demox_v3_0/ etc.; new agents pick which version to copy.
 use_case: template
 domain: template
 api_port: 3099
 frontend_port: 8099
-entry_point: "agents.demox.apis.main:app"
+entry_point: "agents.demox_v1_0.apis.main:app"
 api_version: "1.0.0"
 status: template
 version: "0.1.0"
+template_version: "1.0"

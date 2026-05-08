@@ -321,3 +321,9 @@ Extension pattern: new feature = `routers/{domain}.py` + `services/{domain}_serv
 8. Duplicate port in metadata.yaml → run.sh logs conflict warning
 9. `pytest agents/demo1/tests/` passes
 10. Root utils/, storage/, logs/, test/ no longer exist
+
+---
+
+## Addendum (2026-05-09): template versioning
+
+The template folder originally introduced as `agents/demox/` has been renamed to `agents/demox_v1_0/` and the schema gained a `template_version` field. Future template revisions coexist (`agents/demox_v2_0/`, etc.); each agent's `metadata.yaml` records which template version it was spawned from. The scanner still skips templates by `status: template`, not by folder name — see `app/tests/test_scanner_template_skip.py` for the regression test. Full details are in `specs/runs-subsystem-and-template-versioning.md`.

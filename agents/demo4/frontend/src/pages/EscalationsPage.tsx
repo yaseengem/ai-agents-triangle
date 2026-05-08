@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useRun } from '../context/RunContext'
 import { Link } from 'react-router-dom'
+import { formatDateTime } from '../lib/datetime'
 
 function fmt(n: number) { return `ZAR ${(n / 1_000_000).toFixed(1)}M` }
 
@@ -223,7 +224,7 @@ export function EscalationsPage() {
                     </td>
                     <td style={{ padding: '9px 14px', color: 'var(--t2)' }}>{d.approver_id}</td>
                     <td style={{ padding: '9px 14px', color: 'var(--t3)', fontSize: 11 }}>
-                      {new Date(d.timestamp).toISOString().slice(0, 19).replace('T', ' ')}
+                      {formatDateTime(d.timestamp)}
                     </td>
                     <td style={{ padding: '9px 14px', color: 'var(--t2)' }}>{d.comment || '—'}</td>
                   </tr>

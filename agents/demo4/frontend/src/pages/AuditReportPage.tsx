@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { API } from '../config'
 import { useRun } from '../context/RunContext'
+import { formatDateTime } from '../lib/datetime'
 import type { SummaryData } from '../types'
 
 function RiskBar({ critical, high, medium, low, total }: {
@@ -306,7 +307,7 @@ export function AuditReportPage() {
                     {run.run_id || '—'}
                   </td>
                   <td style={{ padding: '9px 14px', color: 'var(--t2)' }}>
-                    {run.created_at.slice(0, 16).replace('T', ' ')}
+                    {formatDateTime(run.created_at)}
                   </td>
                   <td style={{ padding: '9px 14px' }}>
                     <span style={{

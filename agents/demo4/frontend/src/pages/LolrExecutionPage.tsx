@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useRun } from '../context/RunContext'
+import { formatDateTime } from '../lib/datetime'
 
 function fmt(n: number) { return `ZAR ${(n / 1_000_000).toFixed(1)}M` }
 
@@ -168,7 +169,7 @@ export function LolrExecutionPage() {
                     {item.confirmation_id || '—'}
                   </td>
                   <td style={{ padding: '10px 14px', color: 'var(--t3)', fontSize: 11 }}>
-                    {item.timestamp ? item.timestamp.slice(0, 19).replace('T', ' ') : '—'}
+                    {formatDateTime(item.timestamp)}
                   </td>
                 </tr>
               ))}

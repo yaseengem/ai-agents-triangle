@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { formatDateTime } from '../lib/datetime'
 
 interface RuleConfig {
   critical_obligation_m: number
@@ -197,7 +198,7 @@ export function RuleConfigPage() {
                 {history.map((entry, i) => (
                   <tr key={i} style={{ borderTop: '1px solid var(--b)' }}>
                     <td style={{ padding: '8px 16px', color: 'var(--t3)' }}>
-                      {new Date(entry.timestamp).toISOString().slice(0, 19).replace('T', ' ')}
+                      {formatDateTime(entry.timestamp)}
                     </td>
                     <td style={{ padding: '8px 16px', color: 'var(--t)', fontWeight: 600 }}>
                       {entry.field.replace(/_/g, ' ')}

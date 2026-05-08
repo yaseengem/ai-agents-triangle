@@ -3,7 +3,7 @@ DemoX — FastAPI application entry point.
 Copy this file to your agent folder and update the title/description.
 
 Run from repo root:
-  uvicorn agents.demox.apis.main:app --host 0.0.0.0 --port 3099 --reload
+  uvicorn agents.demox_v1_0.apis.main:app --host 0.0.0.0 --port 3099 --reload
 """
 
 from __future__ import annotations
@@ -56,5 +56,5 @@ app.include_router(router)
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("agents.demox.apis.main:app", host="0.0.0.0",
+    uvicorn.run("agents.demox_v1_0.apis.main:app", host="0.0.0.0",
                 port=_meta.get("api_port", 3099), reload=True)

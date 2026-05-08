@@ -1,0 +1,32 @@
+[
+  {
+    "timestamp": "2026-05-08T15:15:00.704953+00:00",
+    "agent_name": "Settlement Exposure Monitor",
+    "action_taken": "Generated exposure snapshot from ECS, CIS, and TIS systems",
+    "input_summary": "ECS positions for 7 counterparties, CIS data for 6 counterparties, 8 trades monitored",
+    "output_summary": "Identified 3 large exposures (CP-001 ZAR 120M, CP-002 ZAR 60M, CP-007 ZAR 55M), 1 CIS_UNAVAILABLE flag for CP-007"
+  },
+  {
+    "timestamp": "2026-05-08T15:15:30.123456+00:00",
+    "agent_name": "Risk Scoring Agent",
+    "action_taken": "Applied settlement risk classification rules",
+    "input_summary": "8 trades with net obligations ranging from ZAR 8.5M to ZAR 120M",
+    "output_summary": "Classified 3 CRITICAL, 2 HIGH, 1 MEDIUM, 2 LOW risk trades",
+    "rule_applied": "net_obligation_100M_threshold, CIS_UNAVAILABLE_flag, watchlist_escalation_override, recent_failure_escalation"
+  },
+  {
+    "timestamp": "2026-05-08T15:16:00.654321+00:00",
+    "agent_name": "Counterparty Risk Assessment Agent",
+    "action_taken": "Analyzed root causes for 4 high-risk counterparties",
+    "input_summary": "CP-001 (CRITICAL market stress), CP-007 (CRITICAL CIS connectivity), CP-005 (CRITICAL regulatory flag), CP-002 (HIGH securities shortfall)",
+    "output_summary": "Identified 1 IMMEDIATE urgency (CP-007), 3 STANDARD urgency interventions required"
+  },
+  {
+    "timestamp": "2026-05-08T15:16:45.987654+00:00",
+    "agent_name": "Intervention Planning Agent",
+    "action_taken": "Generated intervention plan with systemic risk coordination",
+    "input_summary": "5 high-risk positions requiring intervention, systemic_risk_flag=true activated",
+    "output_summary": "Assigned 3 HUMAN_ESCALATION (all CRITICAL), 2 SETTLEMENT_ROLL (HIGH), total cost ZAR 140,000",
+    "rule_applied": "JSE Rulebook Section 22 - systemic risk flag prevents automated CRITICAL actions"
+  }
+]

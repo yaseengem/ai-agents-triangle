@@ -1,22 +1,32 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { API } from '../config'
 import { useRun } from '../context/RunContext'
+import { formatDateTime } from '../lib/datetime'
 import type { SummaryData } from '../types'
 
 function fmt_m(n: number) { return `ZAR ${(n / 1_000_000).toFixed(0)}M` }
 
-function BigTile({ label, value, color, sub }: { label: string; value: string | number; color: string; sub?: string }) {
-  return (
+function BigTile({ label, value, color, sub, to }: {
+  label: string; value: string | number; color: string; sub?: string; to?: string
+}) {
+  const inner = (
     <div style={{
       background: 'var(--s)', border: `1.5px solid ${color}20`, borderRadius: 12,
       padding: '20px 24px', flex: 1, minWidth: 140,
-    }}>
+      cursor: to ? 'pointer' : 'default',
+      transition: 'border-color 0.15s, transform 0.05s',
+    }}
+    onMouseEnter={(e) => { if (to) e.currentTarget.style.borderColor = color }}
+    onMouseLeave={(e) => { if (to) e.currentTarget.style.borderColor = `${color}20` }}
+    >
       <div style={{ fontSize: 28, fontWeight: 800, color, marginBottom: 4 }}>{value}</div>
       <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--t2)' }}>{label}</div>
       {sub && <div style={{ fontSize: 11, color: 'var(--t3)', marginTop: 2 }}>{sub}</div>}
     </div>
   )
+  if (!to) return inner
+  return <Link to={to} style={{ flex: 1, minWidth: 140, textDecoration: 'none' }}>{inner}</Link>
 }
 
 function SystemHealthChip({ label, status }: { label: string; status: 'ok' | 'degraded' | 'unavailable' }) {
@@ -53,6 +63,7 @@ function RiskBar({ critical, high, medium, low, total }: {
 
 export function CommandCenterPage() {
   const ctx = useRun()
+  const navigate = useNavigate()
   const [summary, setSummary] = useState<SummaryData | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -122,18 +133,19 @@ export function CommandCenterPage() {
         </div>
       </div>
 
-      {/* Live risk tiles */}
+      {/* Live risk tiles — each tile drills through to the relevant filtered page */}
       <div style={{ display: 'flex', gap: 12, marginBottom: 24, flexWrap: 'wrap' }}>
-        <BigTile label="CRITICAL" value={criticals} color="var(--rd)" sub="Immediate action" />
-        <BigTile label="HIGH" value={highs} color="var(--am)" sub="Action before T+2" />
-        <BigTile label="MEDIUM" value={mediums} color="var(--ac)" sub="Monitor closely" />
-        <BigTile label="LOW" value={lows} color="var(--gn)" sub="No action required" />
+        <BigTile label="CRITICAL" value={criticals} color="var(--rd)" sub="Immediate action" to="/watchlist?classification=CRITICAL" />
+        <BigTile label="HIGH" value={highs} color="var(--am)" sub="Action before T+2" to="/watchlist?classification=HIGH" />
+        <BigTile label="MEDIUM" value={mediums} color="var(--ac)" sub="Monitor closely" to="/watchlist?classification=MEDIUM" />
+        <BigTile label="LOW" value={lows} color="var(--gn)" sub="No action required" to="/watchlist?classification=LOW" />
         {summary && (
           <BigTile
             label="Value Protected"
             value={summary.total_settlement_value_protected_zar > 0 ? fmt_m(summary.total_settlement_value_protected_zar) : '—'}
             color="var(--tl)"
             sub="All time ZAR"
+            to="/runs"
           />
         )}
       </div>
@@ -266,12 +278,22 @@ export function CommandCenterPage() {
             </thead>
             <tbody>
               {summary.recent_runs.map((run, i) => (
-                <tr key={i} style={{ borderTop: '1px solid var(--b)', background: run.systemic_stress ? 'var(--rdd)' : 'var(--s)' }}>
+                <tr
+                  key={i}
+                  onClick={() => navigate(`/runs/${run.session_id}`)}
+                  style={{
+                    borderTop: '1px solid var(--b)',
+                    background: run.systemic_stress ? 'var(--rdd)' : 'var(--s)',
+                    cursor: 'pointer',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = run.systemic_stress ? 'var(--rdd)' : 'var(--s2)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = run.systemic_stress ? 'var(--rdd)' : 'var(--s)')}
+                >
                   <td style={{ padding: '10px 16px', color: 'var(--t)', fontWeight: 500 }}>
                     {run.run_id ? run.run_id.slice(0, 22) : '—'}
                   </td>
                   <td style={{ padding: '10px 16px', color: 'var(--t2)' }}>
-                    {run.created_at.slice(0, 16).replace('T', ' ')}
+                    {formatDateTime(run.created_at)}
                   </td>
                   <td style={{ padding: '10px 16px', color: 'var(--t2)' }}>{run.trigger_mode}</td>
                   <td style={{ padding: '10px 16px' }}>

@@ -1,0 +1,56 @@
+[
+  {
+    "timestamp": "2026-05-08T15:16:29.668526+00:00",
+    "agent_name": "Settlement Exposure Collector",
+    "action_taken": "DATA_COLLECTION",
+    "input_summary": "ECS/CIS/TIS system polling for T+1 and T+2 trades",
+    "output_summary": "8 trades collected (4 T+1, 4 T+2), total exposure ZAR 329.5M",
+    "rule_applied": "Standard data collection protocol",
+    "regulatory_basis": null
+  },
+  {
+    "timestamp": "2026-05-08T15:16:30.123456+00:00",
+    "agent_name": "Risk Scoring Agent",
+    "action_taken": "RISK_CLASSIFICATION",
+    "input_summary": "8 trades analyzed with counterparty profiles and ECS positions",
+    "output_summary": "3 CRITICAL, 2 HIGH, 1 MEDIUM, 2 LOW classifications",
+    "rule_applied": "JSE Settlement Risk Classification Rules v2.1",
+    "regulatory_basis": null
+  },
+  {
+    "timestamp": "2026-05-08T15:16:31.234567+00:00",
+    "agent_name": "Counterparty Risk Analyzer",
+    "action_taken": "ROOT_CAUSE_ANALYSIS",
+    "input_summary": "4 counterparties requiring enhanced assessment (CP-001, CP-007, CP-005, CP-002)",
+    "output_summary": "1 LIQUIDITY, 1 CIS_CONNECTIVITY, 1 REGULATORY_FLAG, 1 SECURITIES_SHORTFALL root causes identified",
+    "rule_applied": "Enhanced Due Diligence Framework",
+    "regulatory_basis": "FSCA Directive on Settlement Risk Management"
+  },
+  {
+    "timestamp": "2026-05-08T15:16:32.345678+00:00",
+    "agent_name": "Intervention Planning Agent",
+    "action_taken": "INTERVENTION_PLANNING",
+    "input_summary": "5 trades requiring intervention (3 CRITICAL, 2 HIGH)",
+    "output_summary": "3 HUMAN_ESCALATION, 2 SETTLEMENT_ROLL interventions planned",
+    "rule_applied": "Systemic Risk Flag Override Protocol",
+    "regulatory_basis": "JSE Settlement Rules Section 8.4 - Emergency Procedures"
+  },
+  {
+    "timestamp": "2026-05-08T15:16:33.456789+00:00",
+    "agent_name": "LOLR Execution Agent",
+    "action_taken": "SKIPPED_EXECUTION",
+    "input_summary": "No LOLR_TRIGGER interventions in plan",
+    "output_summary": "Agent execution bypassed - no applicable interventions",
+    "rule_applied": "Conditional execution based on intervention type",
+    "regulatory_basis": "Reserve Bank LOLR Framework"
+  },
+  {
+    "timestamp": "2026-05-08T15:16:34.567890+00:00",
+    "agent_name": "Settlement Roll Agent",
+    "action_taken": "SKIPPED_EXECUTION",
+    "input_summary": "2 SETTLEMENT_ROLL interventions identified but execution not performed in this pipeline run",
+    "output_summary": "Agent execution bypassed - interventions queued for next cycle",
+    "rule_applied": "Roll execution deferred pending human approval",
+    "regulatory_basis": "JSE Settlement Rules Section 7.2 - Roll Procedures"
+  }
+]
