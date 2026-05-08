@@ -23,10 +23,9 @@ env/
 .env.local
 .env.*.local
 
-# Per-agent runtime data (cases, sessions, memory are created at runtime)
-agents/**/data/cases/
-agents/**/data/sessions/
-agents/**/data/memory/
+# Per-agent runtime data is owned by each agent's own .gitignore at
+# agents/{demoN}/.gitignore — each agent generates different files. This
+# file only lists what is shared across all agents (logs and the Vite .env).
 agents/**/logs/
 agents/**/frontend/.env
 

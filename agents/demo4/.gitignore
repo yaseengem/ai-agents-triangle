@@ -1,0 +1,25 @@
+# Runtime data written by the Settlement Failure Prevention Agent during a run.
+# Anything in this list is generated each time the pipeline executes — it is
+# user-specific output, not source code, and must not be committed.
+#
+# What stays tracked:
+#   data/test_scenarios/   — fixture inputs for the Test Runner page (source-of-truth)
+#   data/dummy/            — seed/sample data, if any
+#   any *.py / *.tsx       — source code
+
+# Per-run state and event log (one set of files per run)
+data/sessions/
+
+# Per-run audit and FSCA report artifacts
+data/audit/
+data/reports/
+
+# Run-id daily counter (one file per UTC day)
+data/_run_seq/
+
+# User-uploaded exposure CSV/JSON files
+data/uploads/
+
+# Aggregate dashboards rewritten by every run
+data/dashboard.json
+data/prior_cycle.json

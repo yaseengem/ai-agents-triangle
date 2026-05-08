@@ -1,0 +1,22 @@
+# Runtime data written by the Claim Processing Agent during a run.
+# Each entry is generated per-case or per-session and is user-specific output,
+# not source code, so it must not be committed.
+#
+# What stays tracked:
+#   data/dummy/            — seed claims, sample PDFs, fraud patterns (source of truth)
+#   any *.py / *.tsx       — source code
+
+# Per-case folders (uploaded docs + extracted JSON + decision artifacts)
+data/cases/
+
+# Per-session metadata and message history
+data/sessions/
+
+# Agent memory store
+data/memory/
+
+# Per-case append-only audit text logs
+data/logs/
+
+# Aggregate CSV the agent appends to as cases progress
+data/claims_metadata.csv
